@@ -29,11 +29,11 @@ interface PlayerCardProps {
   playerAreaLayout: { x: number; y: number; width: number; height: number };
 }
 
-export default function PlayerCard({ 
-  card, 
-  index, 
-  totalCards, 
-  onDiscard, 
+export default function PlayerCard({
+  card,
+  index,
+  totalCards,
+  onDiscard,
   gamePhase,
   deckX,
   deckY,
@@ -50,7 +50,7 @@ export default function PlayerCard({
   useEffect(() => {
     const maxHandWidth = playerAreaLayout.width * 0.85;
     const defaultSpacing = 42;
-    const spacing = totalCards > 1 
+    const spacing = totalCards > 1
       ? Math.min(defaultSpacing, (maxHandWidth - CARD_WIDTH) / (totalCards - 1))
       : defaultSpacing;
 
@@ -78,8 +78,16 @@ export default function PlayerCard({
       }
     });
   };
+  const translateZ = useSharedValue(0);
+  const handleHoverIn = () => {
+    translateZ.value = 10;
+    scale.value = withSpring(1.15);
+  }
 
-  
+  const handleHoverOut = () => {
+    translateZ.value = 0;
+    scale.value = withSpring(1.00);
+  }
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -88,14 +96,18 @@ export default function PlayerCard({
         { translateY: translateY.value },
         { scale: scale.value }
       ],
+      zIndex: translateZ.value,
+      elevation: translateZ.value,
     };
   });
 
   return (
     <Animated.View style={[styles.card, animatedStyle]}>
       <Pressable
-        style={{ flex: 1 }} 
+        style={{ flex: 1}}
         onPress={handlePress}
+        onPressIn={handleHoverIn}
+        onPressOut={handleHoverOut}
       >
         <Text style={[styles.suitText, { color: card.color }]}>{card.suit}</Text>
         <Text style={[styles.valueText, { color: card.color }]}>{card.value}</Text>
