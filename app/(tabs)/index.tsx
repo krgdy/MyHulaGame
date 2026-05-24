@@ -16,9 +16,9 @@ type GamePhase = 'SETUP' | 'PLAYER_DRAW' | 'PLAYER_DISCARD' | 'COMPUTER_TURN' | 
 
 export default function HulaGameScreen() {
   const [gamePhase, setGamePhase] = useState<GamePhase>('SETUP');
-  const [deck, setDeck] = useState<Card[]>([]); 
-  const [playerHand, setPlayerHand] = useState<Card[]>([]); 
-  const [computerHand, setComputerHand] = useState<Card[]>([]); 
+  const [deck, setDeck] = useState<Card[]>([]);
+  const [playerHand, setPlayerHand] = useState<Card[]>([]);
+  const [computerHand, setComputerHand] = useState<Card[]>([]);
   const [discardPile, setDiscardPile] = useState<Card[]>([]);
 
   // Layout states for dynamic positioning relative to parent container
@@ -44,7 +44,7 @@ export default function HulaGameScreen() {
       const cardSuit = suitArray[Math.trunc((i - 1) / 13)];
       const cardValue = valueArray[(i - 1) % 13];
       const cardColor: 'red' | 'black' = (cardSuit === '♥' || cardSuit === '♦') ? 'red' : 'black';
-      
+
       newDeck.push({ id: cardId, suit: cardSuit, value: cardValue, color: cardColor });
     }
 
@@ -79,16 +79,26 @@ export default function HulaGameScreen() {
 
     setPlayerHand(playerHand.filter(c => c.id !== cardId));
     setDiscardPile([...discardPile, cardToDiscard]);
-    
+
     // 플레이어가 카드를 버리면 컴퓨터 턴으로 변경
     setGamePhase('COMPUTER_TURN');
+  }
+
+  const discardEnemyCard = (cardId: number) => {
+    const cardToDiscard = computerHand.find(c => c.id === cardId);
+    if (!cardToDiscard) return;
+
+    setComputerHand(computerHand.filter(c => c.id !== cardId));
+    setDiscardPile([...discardPile, cardToDiscard]);
+
+    // 플레이어가 카드를 버리면 컴퓨터 턴으로 변경
+    setGamePhase('PLAYER_DRAW');
   }
 
   const topDiscardCard = discardPile[discardPile.length - 1];
 
   // Calculate coordinates relative to container
   const isLayoutReady = !!(boardAreaLayout && deckRelative && discardRelative && playerAreaLayout && opponentAreaLayout);
-  
   const deckX = boardAreaLayout && deckRelative ? boardAreaLayout.x + deckRelative.x : 0;
   const deckY = boardAreaLayout && deckRelative ? boardAreaLayout.y + deckRelative.y : 0;
   const discardX = boardAreaLayout && discardRelative ? boardAreaLayout.x + discardRelative.x : 0;
@@ -98,19 +108,19 @@ export default function HulaGameScreen() {
     <View style={styles.container}>
 
       {/* 상대방 영역 */}
-      <View 
-        style={styles.opponentArea} 
+      <View
+        style={styles.opponentArea}
         onLayout={(e) => setOpponentAreaLayout(e.nativeEvent.layout)}
       />
 
       {/* 중앙 보드판 영역 */}
-      <View 
+      <View
         style={styles.boardArea}
         onLayout={(e) => setBoardAreaLayout(e.nativeEvent.layout)}
       >
         {/* 남은 덱 더미 (누르면 드로우) */}
-        <TouchableOpacity 
-          style={styles.deck} 
+        <TouchableOpacity
+          style={styles.deck}
           onPress={drawCard}
           disabled={gamePhase !== 'PLAYER_DRAW'}
           onLayout={(e) => setDeckRelative(e.nativeEvent.layout)}
@@ -120,7 +130,7 @@ export default function HulaGameScreen() {
         </TouchableOpacity>
 
         {/* 버림 카드 더미 */}
-        <View 
+        <View
           style={styles.discardPile}
           onLayout={(e) => setDiscardRelative(e.nativeEvent.layout)}
         >
@@ -152,7 +162,7 @@ export default function HulaGameScreen() {
           card={card}
           index={index}
           totalCards={computerHand.length}
-          onDiscard={discardCard}
+          onDiscard={discardEnemyCard}
           gamePhase={gamePhase}
           deckX={deckX}
           deckY={deckY}
