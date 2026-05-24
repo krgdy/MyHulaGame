@@ -6,15 +6,10 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { Card } from '../types/game';
+
 const CARD_WIDTH = 68;
 const CARD_HEIGHT = 100;
-
-interface Card {
-  id: number;
-  suit: '♠' | '♥' | '♦' | '♣';
-  value: string;
-  color: 'red' | 'black';
-}
 
 interface PlayerCardProps {
   card: Card;

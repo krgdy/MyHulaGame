@@ -1,25 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native';
 import PlayerCard from '../../components/PlayerCard';
 import OpponentCard from '../../components/OpponentCard';
+import { useHulaGame } from '../../hooks/useHulaGame';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-interface Card {
-  id: number;
-  suit: '♠' | '♥' | '♦' | '♣';
-  value: string;
-  color: 'red' | 'black';
-}
-
-type GamePhase = 'SETUP' | 'PLAYER_DRAW' | 'PLAYER_DISCARD' | 'COMPUTER_TURN' | 'GAME_OVER';
-
 export default function HulaGameScreen() {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('SETUP');
-  const [deck, setDeck] = useState<Card[]>([]);
-  const [playerHand, setPlayerHand] = useState<Card[]>([]);
-  const [computerHand, setComputerHand] = useState<Card[]>([]);
-  const [discardPile, setDiscardPile] = useState<Card[]>([]);
+  const {
+    gamePhase,
+    deck,
+    playerHand,
+    computerHand,
+    discardPile,
+    drawCard,
+    discardCard,
+    discardEnemyCard,
+  } = useHulaGame();
 
   // Layout states for dynamic positioning relative to parent container
   const [boardAreaLayout, setBoardAreaLayout] = useState<{ x: number; y: number } | null>(null);
@@ -27,73 +24,6 @@ export default function HulaGameScreen() {
   const [discardRelative, setDiscardRelative] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [playerAreaLayout, setPlayerAreaLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [opponentAreaLayout, setOpponentAreaLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-
-  useEffect(() => {
-    if(gamePhase === 'SETUP') {
-      initGame();
-    }
-  }, [gamePhase]);
-
-  const initGame = () => {
-    const suitArray: ('♠' | '♥' | '♦' | '♣')[] = ['♠' , '♥' , '♦' , '♣'];
-    const valueArray: string[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    const newDeck: Card[] = [];
-
-    for (let i = 1; i <= 52; i++) {
-      const cardId = i;
-      const cardSuit = suitArray[Math.trunc((i - 1) / 13)];
-      const cardValue = valueArray[(i - 1) % 13];
-      const cardColor: 'red' | 'black' = (cardSuit === '♥' || cardSuit === '♦') ? 'red' : 'black';
-
-      newDeck.push({ id: cardId, suit: cardSuit, value: cardValue, color: cardColor });
-    }
-
-    for (let j = newDeck.length - 1; j > 0; j--) {
-      const k = Math.floor(Math.random() * (j + 1));
-      [newDeck[j], newDeck[k]] = [newDeck[k], newDeck[j]];
-    }
-
-    const initialPlayerHand = newDeck.splice(0, 7);
-    const initialComputerHand = newDeck.splice(0, 7);
-
-    setDeck(newDeck);
-    setPlayerHand(initialPlayerHand);
-    setComputerHand(initialComputerHand);
-
-    setGamePhase('PLAYER_DRAW');
-  }
-
-  const drawCard = () => {
-    if (gamePhase !== 'PLAYER_DRAW') return;
-    if (deck.length === 0 ) return;
-
-    const nextCard = deck[0];
-    setDeck(deck.slice(1));
-    setPlayerHand([...playerHand, nextCard]);
-    setGamePhase('PLAYER_DISCARD'); // 드로우 후 버리기 단계로 변경
-  }
-
-  const discardCard = (cardId: number) => {
-    const cardToDiscard = playerHand.find(c => c.id === cardId);
-    if (!cardToDiscard) return;
-
-    setPlayerHand(playerHand.filter(c => c.id !== cardId));
-    setDiscardPile([...discardPile, cardToDiscard]);
-
-    // 플레이어가 카드를 버리면 컴퓨터 턴으로 변경
-    setGamePhase('COMPUTER_TURN');
-  }
-
-  const discardEnemyCard = (cardId: number) => {
-    const cardToDiscard = computerHand.find(c => c.id === cardId);
-    if (!cardToDiscard) return;
-
-    setComputerHand(computerHand.filter(c => c.id !== cardId));
-    setDiscardPile([...discardPile, cardToDiscard]);
-
-    // 플레이어가 카드를 버리면 컴퓨터 턴으로 변경
-    setGamePhase('PLAYER_DRAW');
-  }
 
   const topDiscardCard = discardPile[discardPile.length - 1];
 
@@ -150,8 +80,8 @@ export default function HulaGameScreen() {
       </View>
 
       {/* 플레이어 영역 */}
-      <View 
-        style={styles.playerArea} 
+      <View
+        style={styles.playerArea}
         onLayout={(e) => setPlayerAreaLayout(e.nativeEvent.layout)}
       />
 

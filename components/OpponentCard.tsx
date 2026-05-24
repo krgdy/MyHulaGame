@@ -1,16 +1,11 @@
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Card } from '../types/game';
 
 const CARD_WIDTH = 56;
 const CARD_HEIGHT = 82;
 
-interface Card {
-  id: number;
-  suit: '♠' | '♥' | '♦' | '♣';
-  value: string;
-  color: 'red' | 'black';
-}
 
 interface OpponentCardProps {
   card: Card;
