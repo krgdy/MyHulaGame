@@ -1,16 +1,9 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const CARD_WIDTH = 56;
 const CARD_HEIGHT = 82;
-
-const DECK_X = SCREEN_WIDTH / 2 - CARD_WIDTH - 15;
-const DECK_Y = SCREEN_HEIGHT / 2 - CARD_HEIGHT / 2;
-
-const COMPUTER_AREA_Y = 0;
 
 interface Card {
   id: number;
@@ -25,27 +18,39 @@ interface OpponentCardProps {
   totalCards: number;
   onDiscard: (id: number) => void;
   gamePhase: string;
+  deckX: number;
+  deckY: number;
+  opponentAreaLayout: { x: number; y: number; width: number; height: number };
 }
 
-export default function OpponentCard({ card, index, totalCards, onDiscard, gamePhase }: OpponentCardProps) {
+export default function OpponentCard({ 
+  card, 
+  index, 
+  totalCards, 
+  onDiscard, 
+  gamePhase,
+  deckX,
+  deckY,
+  opponentAreaLayout
+}: OpponentCardProps) {
   // 덱 위치에서 탄생
-  const translateX = useSharedValue(DECK_X);
-  const translateY = useSharedValue(DECK_Y);
+  const translateX = useSharedValue(deckX);
+  const translateY = useSharedValue(deckY);
 
   useEffect(() => {
-    const maxHandWidth = SCREEN_WIDTH * 0.8;
+    const maxHandWidth = opponentAreaLayout.width * 0.8;
     const defaultSpacing = 30;
     const spacing = totalCards > 1 
       ? Math.min(defaultSpacing, (maxHandWidth - CARD_WIDTH) / (totalCards - 1))
       : defaultSpacing;
 
-    const handStartX = (SCREEN_WIDTH - (spacing * (totalCards - 1) + CARD_WIDTH)) / 2;
+    const handStartX = opponentAreaLayout.x + (opponentAreaLayout.width - (spacing * (totalCards - 1) + CARD_WIDTH)) / 2;
     const targetX = handStartX + index * spacing;
-    const targetY = COMPUTER_AREA_Y;
+    const targetY = opponentAreaLayout.y + (opponentAreaLayout.height - CARD_HEIGHT) / 2;
 
     translateX.value = withSpring(targetX);
     translateY.value = withSpring(targetY);
-  }, [index, totalCards]);
+  }, [index, totalCards, opponentAreaLayout]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -64,6 +69,8 @@ export default function OpponentCard({ card, index, totalCards, onDiscard, gameP
 const styles = StyleSheet.create({
   cardBack: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     backgroundColor: '#b22222',
