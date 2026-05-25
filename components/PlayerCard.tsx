@@ -62,8 +62,6 @@ export default function PlayerCard({
   const handlePress = () => {
     if (gamePhase !== 'PLAYER_DISCARD') return; // 버릴 수 있는 턴에만 작동
 
-    scale.value = withSpring(1.05);
-
     // 1. 버림 카드 더미 좌표로 카드를 날립니다.
     translateX.value = withSpring(discardX);
     translateY.value = withSpring(discardY, {}, (finished) => {

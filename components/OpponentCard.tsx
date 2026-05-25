@@ -38,6 +38,7 @@ export default function OpponentCard({
   // 덱 위치에서 탄생
   const translateX = useSharedValue(deckX);
   const translateY = useSharedValue(deckY);
+  const scale = useSharedValue(1.2); // 생성시 덱의 카드 크기와 맞추기 위해
 
   // 생성 이후 정렬
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function OpponentCard({
     const targetX = handStartX + index * spacing;
     const targetY = opponentAreaLayout.y + (opponentAreaLayout.height - CARD_HEIGHT) / 2;
 
+    scale.value = withSpring(1);
     translateX.value = withSpring(targetX);
     translateY.value = withSpring(targetY);
   }, [index, totalCards, opponentAreaLayout]);
@@ -58,12 +60,14 @@ export default function OpponentCard({
   // 버려질 때 애니메이션
   useEffect(() => {
     if (discarding === 0 || card.id !== discarding) return;
-
-    // 1. 버림 카드 더미 좌표로 카드를 날립니다.
+    
+    // 1. 덱과 비슷한 크기로 카드의 크기를 변경
+    scale.value = withSpring(1.2);
+    // 2. 버림 카드 더미 좌표로 카드를 날립니다.
     translateX.value = withSpring(discardX);
     translateY.value = withSpring(discardY, {}, (finished) => {
       if (finished) {
-        // 2. 애니메이션이 끝난 후 안전하게 부모의 데이터에서 제거
+        // 3. 애니메이션이 끝난 후 안전하게 부모의 데이터에서 제거
         scheduleOnRN(onDiscard, card.id);
       }
     });
@@ -73,8 +77,10 @@ export default function OpponentCard({
     return {
       transform: [
         { translateX: translateX.value },
-        { translateY: translateY.value }
-      ]
+        { translateY: translateY.value },
+        { scale: scale.value }
+      ],
+      transformOrigin: 'top left', // 스케일 변경 시 레이아웃 기준점 안 맞는 문제 해결
     };
   });
 
