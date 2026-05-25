@@ -16,6 +16,7 @@ export default function HulaGameScreen() {
     drawCard,
     discardCard,
     discardEnemyCard,
+    computerDiscarding,
   } = useHulaGame();
 
   // Layout states for dynamic positioning relative to parent container
@@ -96,6 +97,9 @@ export default function HulaGameScreen() {
           gamePhase={gamePhase}
           deckX={deckX}
           deckY={deckY}
+          discardX={discardX}
+          discardY={discardY}
+          discarding={computerDiscarding}
           opponentAreaLayout={opponentAreaLayout}
         />
       ))}

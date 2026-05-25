@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Pressable , StyleSheet, Text } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
   withSpring
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';

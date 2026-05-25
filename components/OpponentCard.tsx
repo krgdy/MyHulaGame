@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { scheduleOnRN } from 'react-native-worklets';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Card } from '../types/game';
 
@@ -15,27 +16,34 @@ interface OpponentCardProps {
   gamePhase: string;
   deckX: number;
   deckY: number;
+  discardX : number;
+  discardY : number;
+  discarding : number;
   opponentAreaLayout: { x: number; y: number; width: number; height: number };
 }
 
-export default function OpponentCard({ 
-  card, 
-  index, 
-  totalCards, 
-  onDiscard, 
+export default function OpponentCard({
+  card,
+  index,
+  totalCards,
+  onDiscard,
   gamePhase,
   deckX,
   deckY,
+  discardX,
+  discardY,
+  discarding,
   opponentAreaLayout
 }: OpponentCardProps) {
   // 덱 위치에서 탄생
   const translateX = useSharedValue(deckX);
   const translateY = useSharedValue(deckY);
 
+  // 생성 이후 정렬
   useEffect(() => {
     const maxHandWidth = opponentAreaLayout.width * 0.8;
     const defaultSpacing = 30;
-    const spacing = totalCards > 1 
+    const spacing = totalCards > 1
       ? Math.min(defaultSpacing, (maxHandWidth - CARD_WIDTH) / (totalCards - 1))
       : defaultSpacing;
 
@@ -47,6 +55,20 @@ export default function OpponentCard({
     translateY.value = withSpring(targetY);
   }, [index, totalCards, opponentAreaLayout]);
 
+  // 버려질 때 애니메이션
+  useEffect(() => {
+    if (discarding === 0 || card.id !== discarding) return;
+
+    // 1. 버림 카드 더미 좌표로 카드를 날립니다.
+    translateX.value = withSpring(discardX);
+    translateY.value = withSpring(discardY, {}, (finished) => {
+      if (finished) {
+        // 2. 애니메이션이 끝난 후 안전하게 부모의 데이터에서 제거
+        scheduleOnRN(onDiscard, card.id);
+      }
+    });
+  }, [discarding]);
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -57,6 +79,11 @@ export default function OpponentCard({
   });
 
   return (
+    (card.id === discarding) ?
+    <Animated.View style={[styles.card, animatedStyle]}>
+      <Text style={[styles.suitText, { color: card.color }]}>{card.suit}</Text>
+      <Text style={[styles.valueText, { color: card.color }]}>{card.value}</Text>
+    </Animated.View> :
     <Animated.View style={[styles.cardBack, animatedStyle]} />
   );
 }
@@ -77,5 +104,25 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
-  }
+  },
+  card: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#d4af37',
+    padding: 6,
+    justifyContent: 'space-between',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  suitText: { fontSize: 20, fontWeight: 'bold' },
+  valueText: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', alignSelf: 'center' }
 });
