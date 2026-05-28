@@ -163,3 +163,81 @@ export function getDiscardCard(computerHand: Card[]): number {
   // 3. 모두 등록 가능하면 그 중 숫자 가장 큰 카드 선택
   return sortCardsDescending(meldableCards)[0].id;
 }
+
+/**
+ * 선택된 카드 묶음이 독립적인 등록(Meld) 조건을 만족하는지 검사합니다.
+ */
+export function isValidMeld(cards: Card[]): boolean {
+  if (cards.length === 0) return false;
+
+  // 1. 7 카드는 단독 등록 가능
+  if (cards.length === 1) {
+    return cards[0].value === '7';
+  }
+
+  // 2. 트리플 / 포커 (같은 숫자 3장 이상)
+  const allSameValue = cards.every(c => c.value === cards[0].value);
+  if (allSameValue && cards.length >= 3) {
+    return true;
+  }
+
+  // 3. 스트레이트 플러시 (같은 무늬 연속된 숫자 3장 이상)
+  const allSameSuit = cards.every(c => c.suit === cards[0].suit);
+  if (allSameSuit && cards.length >= 3) {
+    const values = cards.map(getCardNumericValue).sort((a, b) => a - b);
+    const isConsecutive = values.every((val, idx) => idx === 0 || val === values[idx - 1] + 1);
+    if (isConsecutive) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * 카드를 특정 등록 세트(Meld)에 붙일(Layoff) 수 있는지 검사하고 붙는 위치를 반환합니다.
+ */
+export function canLayoff(card: Card, meld: Card[]): 'front' | 'back' | 'group' | null {
+  if (meld.length === 0) return null;
+
+  const cardVal = getCardNumericValue(card);
+
+  // 1. 단일 7 카드 세트인 경우 (스트레이트의 시작점)
+  if (meld.length === 1 && meld[0].value === '7') {
+    if (card.suit === meld[0].suit) {
+      const meldVal = getCardNumericValue(meld[0]); // 7
+      if (cardVal === meldVal - 1) return 'front'; // 6
+      if (cardVal === meldVal + 1) return 'back';  // 8
+    }
+    return null;
+  }
+
+  // 2. 그룹 세트 (트리플/포커)인지 확인
+  const isGroup = meld.every(c => c.value === meld[0].value);
+  if (isGroup) {
+    // 숫자가 같고 무늬가 겹치지 않아야 함
+    if (card.value === meld[0].value) {
+      const hasSuitAlready = meld.some(c => c.suit === card.suit);
+      if (!hasSuitAlready) {
+        return 'group';
+      }
+    }
+    return null;
+  }
+
+  // 3. 시퀀스 세트 (동일 무늬 연속 숫자)인지 확인
+  const isSequence = meld.every(c => c.suit === meld[0].suit);
+  if (isSequence) {
+    if (card.suit === meld[0].suit) {
+      const sortedMeld = [...meld].sort((a, b) => getCardNumericValue(a) - getCardNumericValue(b));
+      const minVal = getCardNumericValue(sortedMeld[0]);
+      const maxVal = getCardNumericValue(sortedMeld[sortedMeld.length - 1]);
+
+      if (cardVal === minVal - 1) return 'front';
+      if (cardVal === maxVal + 1) return 'back';
+    }
+    return null;
+  }
+
+  return null;
+}

@@ -55,7 +55,7 @@ export default function OpponentCard({
     scale.value = withSpring(1);
     translateX.value = withSpring(targetX);
     translateY.value = withSpring(targetY);
-  }, [index, totalCards, opponentAreaLayout]);
+  }, [index, totalCards, opponentAreaLayout?.x, opponentAreaLayout?.y, opponentAreaLayout?.width, opponentAreaLayout?.height]);
 
   // 버려질 때 애니메이션
   useEffect(() => {
