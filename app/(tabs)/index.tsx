@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import PlayerCard from '../../components/PlayerCard';
 import OpponentCard from '../../components/OpponentCard';
@@ -177,6 +177,8 @@ export default function HulaGameScreen() {
       }
     }
   };
+  //화면 크기 변경 시 강제 뷰 마운팅을 위한 훅
+  const { width, height } = useWindowDimensions();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -193,6 +195,7 @@ export default function HulaGameScreen() {
 
         {/* 상대방 등록 카드 슬라이드 뷰 */}
         <View
+          key={`opponent-area-${width}-${height}`}
           style={styles.meldsContainer}
           onLayout={(e) => {
             const { x, y, width, height } = e.nativeEvent.layout;
@@ -235,8 +238,8 @@ export default function HulaGameScreen() {
         <View
           style={styles.boardArea}
           onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setBoardAreaLayout({ x, y, width, height });
+            const { x, y} = e.nativeEvent.layout;
+            setBoardAreaLayout({ x, y});
           }}
         >
           {/* 남은 덱 더미 (누르면 드로우) */}
@@ -360,6 +363,7 @@ export default function HulaGameScreen() {
 
         {/* 플레이어 영역 */}
         <View
+          key={`player-area-${width}-${height}`}
           style={styles.playerArea}
           onLayout={(e) => {
             const { x, y, width, height } = e.nativeEvent.layout;
@@ -515,4 +519,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-});
+});
