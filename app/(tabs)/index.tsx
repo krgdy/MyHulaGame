@@ -6,6 +6,7 @@ import OpponentCard from '../../components/OpponentCard';
 import { useHulaGame } from '../../hooks/useHulaGame';
 import { useMeasuredLayout } from '../../hooks/useMeasuredLayout';
 import { isValidMeld, canLayoff } from '../../utils/hulaAI';
+import { Card } from '../../types/game';
 
 export default function HulaGameScreen() {
   const {
@@ -22,6 +23,8 @@ export default function HulaGameScreen() {
     registerMeld,
     layoffCard,
     computerDiscarding,
+    reorderPlayerHand,
+    sortPlayerHand,
   } = useHulaGame();
 
   // 화면 크기 변경 시 강제 뷰 마운팅 및 네이티브 레이아웃 측정을 위한 훅
@@ -111,6 +114,68 @@ export default function HulaGameScreen() {
     }
   };
 
+  // 특정 등록 패 영역에서 가장 가까운 유효 등록 그룹 인덱스 반환
+  const findClosestValidMeld = (
+    card: Card,
+    scrollDropX: number,
+    melds: Card[][],
+    expandedMeldIdx: number | null
+  ): number => {
+    let currentX = 12; // paddingHorizontal
+    let closestIdx = -1;
+    let minDistance = 99999;
+
+    for (let i = 0; i < melds.length; i++) {
+      const meld = melds[i];
+      const isExpanded = i === expandedMeldIdx;
+      const cardSpacing = isExpanded ? 36 : 14; // 펼쳤을 때(32+4) vs 겹쳤을 때(32-18)
+      const width = 32 + (meld.length - 1) * cardSpacing + 8;
+
+      const leftBound = currentX - 30;
+      const rightBound = currentX + width + 30;
+
+      // 가로 바운더리 내에 존재하고 붙이기가 가능할 때만 거리 비교 수행
+      if (scrollDropX >= leftBound && scrollDropX <= rightBound) {
+        if (canLayoff(card, meld)) {
+          const centerX = currentX + width / 2;
+          const dist = Math.abs(centerX - scrollDropX);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestIdx = i;
+          }
+        }
+      }
+      currentX += width + 12; // gap(12)
+    }
+
+    return closestIdx;
+  };
+
+  // 내 손패 카드 슬롯 중 가장 가까운 인덱스 반환
+  const findClosestHandSlot = (cardCenterX: number): number => {
+    if (!playerAreaLayout) return -1;
+    const totalCards = playerHand.length;
+    if (totalCards <= 1) return -1;
+
+    const maxHandWidth = playerAreaLayout.width * 0.85;
+    const spacing = Math.min(42, (maxHandWidth - 68) / (totalCards - 1)); // CARD_WIDTH = 68
+    const handStartX = playerAreaLayout.x + (playerAreaLayout.width - (spacing * (totalCards - 1) + 68)) / 2;
+
+    let closestIdx = 0;
+    let minDistance = 99999;
+
+    for (let i = 0; i < totalCards; i++) {
+      const slotCenterX = handStartX + i * spacing + 34; // CARD_WIDTH / 2
+      const dist = Math.abs(slotCenterX - cardCenterX);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIdx = i;
+      }
+    }
+
+    return closestIdx;
+  };
+
   // 내 손패 드래그 종료 시 (붙이기 시도)
   const handleDragEnd = (cardId: number, dropX: number, dropY: number) => {
     if (isActionProcessing.current) return;
@@ -128,39 +193,12 @@ export default function HulaGameScreen() {
       cardCenterY <= playerMeldsLayout.y + playerMeldsLayout.height + 40
     ) {
       const scrollDropX = cardCenterX - playerMeldsLayout.x + playerMeldsScrollX.current;
-
-      let currentX = 12; // paddingHorizontal
-      let closestIdx = -1;
-      let minDistance = 99999;
-
-      for (let i = 0; i < playerMelds.length; i++) {
-        const meld = playerMelds[i];
-        const isExpanded = i === expandedPlayerMeldIdx;
-        const cardSpacing = isExpanded ? 36 : 14; // 펼쳤을 때(32+4) vs 겹쳤을 때(32-18)
-        const width = 32 + (meld.length - 1) * cardSpacing + 8;
-
-        const leftBound = currentX - 30;
-        const rightBound = currentX + width + 30;
-
-        // 가로 바운더리 내에 존재하고 붙이기가 가능할 때만 거리 비교 수행
-        if (scrollDropX >= leftBound && scrollDropX <= rightBound) {
-          if (canLayoff(card, meld)) {
-            const centerX = currentX + width / 2;
-            const dist = Math.abs(centerX - scrollDropX);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestIdx = i;
-            }
-          }
-        }
-        currentX += width + 12; // gap(12)
-      }
-
+      const closestIdx = findClosestValidMeld(card, scrollDropX, playerMelds, expandedPlayerMeldIdx);
       if (closestIdx !== -1) {
         layoffCard(card.id, closestIdx, true, true);
         setSelectedCardIds(prev => prev.filter(id => id !== cardId));
-        return;
       }
+      return;
     }
 
     // 2. 상대 등록 영역에 드롭한 경우 (세로 오차 범위 40px 버퍼 추가)
@@ -170,39 +208,25 @@ export default function HulaGameScreen() {
       cardCenterY <= opponentMeldsLayout.y + opponentMeldsLayout.height + 40
     ) {
       const scrollDropX = cardCenterX - opponentMeldsLayout.x + opponentMeldsScrollX.current;
-
-      let currentX = 12; // paddingHorizontal
-      let closestIdx = -1;
-      let minDistance = 99999;
-
-      for (let i = 0; i < computerMelds.length; i++) {
-        const meld = computerMelds[i];
-        const isExpanded = i === expandedComputerMeldIdx;
-        const cardSpacing = isExpanded ? 36 : 14;
-        const width = 32 + (meld.length - 1) * cardSpacing + 8;
-
-        const leftBound = currentX - 30;
-        const rightBound = currentX + width + 30;
-
-        // 가로 바운더리 내에 존재하고 붙이기가 가능할 때만 거리 비교 수행
-        if (scrollDropX >= leftBound && scrollDropX <= rightBound) {
-          if (canLayoff(card, meld)) {
-            const centerX = currentX + width / 2;
-            const dist = Math.abs(centerX - scrollDropX);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestIdx = i;
-            }
-          }
-        }
-        currentX += width + 12; // gap(12)
-      }
-
+      const closestIdx = findClosestValidMeld(card, scrollDropX, computerMelds, expandedComputerMeldIdx);
       if (closestIdx !== -1) {
         layoffCard(card.id, closestIdx, false, true);
         setSelectedCardIds(prev => prev.filter(id => id !== cardId));
-        return;
       }
+      return;
+    }
+
+    // 3. 내 손패 영역에 드롭한 경우 (수동 순서 변경)
+    if (
+      playerAreaLayout &&
+      cardCenterY >= playerAreaLayout.y - 50 &&
+      cardCenterY <= playerAreaLayout.y + playerAreaLayout.height + 50
+    ) {
+      const closestIdx = findClosestHandSlot(cardCenterX);
+      if (closestIdx !== -1) {
+        reorderPlayerHand(card.id, closestIdx);
+      }
+      return;
     }
   };
 
@@ -378,13 +402,31 @@ export default function HulaGameScreen() {
               )}
             </View>
           ) : (
-            <Text style={styles.guideText}>
-              {gamePhase === 'PLAYER_DRAW'
-                ? '덱을 눌러 카드를 한 장 가져오세요.'
-                : gamePhase === 'PLAYER_DISCARD'
-                ? '카드를 탭하여 선택하거나, 드래그하여 등록된 카드에 붙이세요.'
-                : '상대방의 턴입니다...'}
-            </Text>
+            <View style={styles.nonSelectedRow}>
+              <Text style={styles.guideText}>
+                {gamePhase === 'PLAYER_DRAW'
+                  ? '덱을 눌러 카드를 가져오세요.'
+                  : gamePhase === 'PLAYER_DISCARD'
+                  ? '카드를 탭하여 선택하거나 드래그하세요.'
+                  : '상대방의 턴입니다...'}
+              </Text>
+              {(gamePhase === 'PLAYER_DRAW' || gamePhase === 'PLAYER_DISCARD') && (
+                <View style={styles.sortButtonRow}>
+                  <TouchableOpacity
+                    style={styles.sortButton}
+                    onPress={() => sortPlayerHand('suit')}
+                  >
+                    <Text style={styles.sortButtonText}>♠ 무늬</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.sortButton}
+                    onPress={() => sortPlayerHand('value')}
+                  >
+                    <Text style={styles.sortButtonText}>🔢 숫자</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           )}
         </View>
 
@@ -541,5 +583,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  nonSelectedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  sortButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sortButton: {
+    backgroundColor: '#1a5e2f',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    elevation: 2,
+  },
+  sortButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

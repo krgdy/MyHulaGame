@@ -177,6 +177,32 @@ export function useHulaGame() {
     }
   };
 
+  const reorderPlayerHand = (cardId: number, targetIndex: number) => {
+    const card = playerHand.find(c => c.id === cardId);
+    if (!card) return;
+    const newHand = playerHand.filter(c => c.id !== cardId);
+    newHand.splice(targetIndex, 0, card);
+    setPlayerHand(newHand);
+  };
+
+  const sortPlayerHand = (by: 'suit' | 'value') => {
+    const suitOrder: Record<string, number> = { '♠': 0, '♥': 1, '♦': 2, '♣': 3 };
+    const valueOrder: Record<string, number> = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+
+    const sorted = [...playerHand].sort((a, b) => {
+      if (by === 'value') {
+        const diffVal = (valueOrder[a.value] || 0) - (valueOrder[b.value] || 0);
+        if (diffVal !== 0) return diffVal;
+        return (suitOrder[a.suit] || 0) - (suitOrder[b.suit] || 0);
+      } else {
+        const diffSuit = (suitOrder[a.suit] || 0) - (suitOrder[b.suit] || 0);
+        if (diffSuit !== 0) return diffSuit;
+        return (valueOrder[a.value] || 0) - (valueOrder[b.value] || 0);
+      }
+    });
+    setPlayerHand(sorted);
+  };
+
   const runComputerMeldsAndLayoffs = (
     cHand: Card[],
     pMelds: Card[][],
@@ -313,5 +339,7 @@ export function useHulaGame() {
     layoffCard,
     initGame,
     computerDiscarding,
+    reorderPlayerHand,
+    sortPlayerHand,
   };
 }
