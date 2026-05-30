@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import PlayerCard from '../../components/PlayerCard';
 import OpponentCard from '../../components/OpponentCard';
 import { useHulaGame } from '../../hooks/useHulaGame';
+import { useMeasuredLayout } from '../../hooks/useMeasuredLayout';
 import { isValidMeld, canLayoff } from '../../utils/hulaAI';
 
 export default function HulaGameScreen() {
@@ -23,16 +24,17 @@ export default function HulaGameScreen() {
     computerDiscarding,
   } = useHulaGame();
 
-  // Layout states for dynamic positioning relative to parent container
-  const [boardAreaLayout, setBoardAreaLayout] = useState<{ x: number; y: number } | null>(null);
-  const [deckRelative, setDeckRelative] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [discardRelative, setDiscardRelative] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [playerAreaLayout, setPlayerAreaLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [opponentAreaLayout, setOpponentAreaLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  // 화면 크기 변경 시 강제 뷰 마운팅 및 네이티브 레이아웃 측정을 위한 훅
+  const { width, height } = useWindowDimensions();
 
-  // 등록 영역의 레이아웃 좌표 및 스크롤 위치 트래킹
-  const [playerMeldsLayout, setPlayerMeldsLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [opponentMeldsLayout, setOpponentMeldsLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  // useMeasuredLayout 훅을 사용하여 각 컴포넌트의 위치와 크기 정보를 동적으로 추적
+  const [opponentAreaRef, opponentAreaLayout] = useMeasuredLayout([width, height]);
+  const [opponentMeldsRef, opponentMeldsLayout] = useMeasuredLayout([width, height]);
+  const [boardAreaRef, boardAreaLayout] = useMeasuredLayout([width, height]);
+  const [deckRef, deckRelative] = useMeasuredLayout([width, height]);
+  const [discardRef, discardRelative] = useMeasuredLayout([width, height]);
+  const [playerMeldsRef, playerMeldsLayout] = useMeasuredLayout([width, height]);
+  const [playerAreaRef, playerAreaLayout] = useMeasuredLayout([width, height]);
   
   const playerMeldsScrollX = useRef(0);
   const opponentMeldsScrollX = useRef(0);
@@ -192,8 +194,6 @@ export default function HulaGameScreen() {
       }
     }
   };
-  //화면 크기 변경 시 강제 뷰 마운팅을 위한 훅
-  const { width, height } = useWindowDimensions();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -201,21 +201,14 @@ export default function HulaGameScreen() {
 
         {/* 상대방 영역 */}
         <View
+          ref={opponentAreaRef}
           style={styles.opponentArea}
-          onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setOpponentAreaLayout({ x, y, width, height });
-          }}
         />
 
         {/* 상대방 등록 카드 슬라이드 뷰 */}
         <View
-          key={`opponent-area-${width}-${height}`}
+          ref={opponentMeldsRef}
           style={styles.meldsContainer}
-          onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setOpponentMeldsLayout({ x, y, width, height });
-          }}
         >
           <ScrollView
             horizontal
@@ -251,21 +244,15 @@ export default function HulaGameScreen() {
 
         {/* 중앙 보드판 영역 */}
         <View
+          ref={boardAreaRef}
           style={styles.boardArea}
-          onLayout={(e) => {
-            const { x, y} = e.nativeEvent.layout;
-            setBoardAreaLayout({ x, y});
-          }}
         >
           {/* 남은 덱 더미 (누르면 드로우) */}
           <TouchableOpacity
+            ref={deckRef}
             style={styles.deck}
             onPress={drawCard}
             disabled={gamePhase !== 'PLAYER_DRAW'}
-            onLayout={(e) => {
-              const { x, y, width, height } = e.nativeEvent.layout;
-              setDeckRelative({ x, y, width, height });
-            }}
           >
             <Text style={styles.deckText}>DECK</Text>
             <Text style={styles.deckCount}>{deck.length}</Text>
@@ -273,11 +260,8 @@ export default function HulaGameScreen() {
 
           {/* 버림 카드 더미 */}
           <View
+            ref={discardRef}
             style={styles.discardPile}
-            onLayout={(e) => {
-              const { x, y, width, height } = e.nativeEvent.layout;
-              setDiscardRelative({ x, y, width, height });
-            }}
           >
             {topDiscardCard ? (
               <View style={styles.discardCardInner}>
@@ -296,11 +280,8 @@ export default function HulaGameScreen() {
 
         {/* 내 등록 카드 슬라이드 뷰 */}
         <View
+          ref={playerMeldsRef}
           style={styles.meldsContainer}
-          onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setPlayerMeldsLayout({ x, y, width, height });
-          }}
         >
           <ScrollView
             horizontal
@@ -378,12 +359,8 @@ export default function HulaGameScreen() {
 
         {/* 플레이어 영역 */}
         <View
-          key={`player-area-${width}-${height}`}
+          ref={playerAreaRef}
           style={styles.playerArea}
-          onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setPlayerAreaLayout({ x, y, width, height });
-          }}
         />
 
         {/* 절대 좌표 카드들의 렌더링 그룹 */}
