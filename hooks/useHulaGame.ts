@@ -23,6 +23,13 @@ export function useHulaGame() {
   }, [gamePhase, computerPhase]);
 
   useEffect(() => {
+    if (gamePhase === 'SETUP') return;
+    if (playerHand.length === 0 || computerHand.length === 0) {
+      setGamePhase('GAME_OVER');
+    }
+  }, [playerHand.length, computerHand.length, gamePhase]);
+
+  useEffect(() => {
     if (computerPhase === 'DRAWING') {
       const timer = setTimeout(() => {
         // [1] 컴퓨터 등록 및 붙이기 AI 구동

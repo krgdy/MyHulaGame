@@ -7,6 +7,7 @@ import { useHulaGame } from '../../hooks/useHulaGame';
 import { useMeasuredLayout } from '../../hooks/useMeasuredLayout';
 import { isValidMeld, canLayoff } from '../../utils/hulaAI';
 import { Card } from '../../types/game';
+import GameOverScreen from '../../components/GameOverScreen';
 
 export default function HulaGameScreen() {
   const {
@@ -25,6 +26,7 @@ export default function HulaGameScreen() {
     computerDiscarding,
     reorderPlayerHand,
     sortPlayerHand,
+    initGame,
   } = useHulaGame();
 
   // 화면 크기 변경 시 강제 뷰 마운팅 및 네이티브 레이아웃 측정을 위한 훅
@@ -229,6 +231,17 @@ export default function HulaGameScreen() {
       return;
     }
   };
+
+  if (gamePhase === 'GAME_OVER') {
+    return (
+      <GameOverScreen
+        playerWon={playerHand.length === 0}
+        playerHandCount={playerHand.length}
+        computerHandCount={computerHand.length}
+        onRestart={initGame}
+      />
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
