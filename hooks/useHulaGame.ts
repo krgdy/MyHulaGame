@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, GamePhase } from '../types/game';
-import { getDiscardCard, canLayoff } from '../utils/hulaAI';
+import { getDiscardCard, canLayoff, isStraightFlush, isTriple } from '../utils/hulaAI';
 
 export function useHulaGame() {
   const [gamePhase, setGamePhase] = useState<GamePhase>('SETUP');
@@ -200,35 +200,46 @@ export function useHulaGame() {
       valueGroups[card.value].push(card);
     }
     for (const val in valueGroups) {
-      if (valueGroups[val].length >= 3) {
-        registeredMelds.push(valueGroups[val]);
-        const ids = valueGroups[val].map(c => c.id);
+      const group = valueGroups[val];
+      if (group.length === 4 || (group.length === 3 && isTriple(group))) {
+        registeredMelds.push(group);
+        const ids = group.map(c => c.id);
         hand = hand.filter(c => !ids.includes(c.id));
       }
     }
 
-    // 3. 등록 가능한 스트레이트 플러시 추출 (3장 이상 같은 무늬 연속 숫자)
+    // 3. 등록 가능한 스트레이트 플러시 추출 (순환 스트레이트 포함)
     const suitGroups: Record<string, Card[]> = {};
     for (const card of hand) {
       if (!suitGroups[card.suit]) suitGroups[card.suit] = [];
       suitGroups[card.suit].push(card);
     }
     for (const suit in suitGroups) {
-      const suitCards = suitGroups[suit].sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
-      let i = 0;
-      while (i < suitCards.length) {
-        let j = i;
-        while (j + 1 < suitCards.length && 
-               (VALUE_MAP[suitCards[j + 1].value] || 0) === (VALUE_MAP[suitCards[j].value] || 0) + 1) {
-          j++;
+      let suitCards = suitGroups[suit];
+      // 크기 순 정렬
+      suitCards.sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
+
+      let foundMeld = true;
+      while (foundMeld && suitCards.length >= 3) {
+        foundMeld = false;
+        const len = suitCards.length;
+        // 슬라이딩 윈도우로 3장 수열 탐색
+        for (let i = 0; i < len; i++) {
+          const c1 = suitCards[i];
+          const c2 = suitCards[(i + 1) % len];
+          const c3 = suitCards[(i + 2) % len];
+
+          if (isStraightFlush([c1, c2, c3])) {
+            const seq = [c1, c2, c3];
+            registeredMelds.push(seq);
+            const ids = seq.map(c => c.id);
+            // 손패와 현재 suit 묶음에서 제거
+            hand = hand.filter(c => !ids.includes(c.id));
+            suitCards = suitCards.filter(c => !ids.includes(c.id));
+            foundMeld = true;
+            break;
+          }
         }
-        if (j - i + 1 >= 3) {
-          const seq = suitCards.slice(i, j + 1);
-          registeredMelds.push(seq);
-          const ids = seq.map(c => c.id);
-          hand = hand.filter(c => !ids.includes(c.id));
-        }
-        i = j + 1;
       }
     }
 
@@ -242,39 +253,40 @@ export function useHulaGame() {
       for (let cardIdx = 0; cardIdx < hand.length; cardIdx++) {
         const card = hand[cardIdx];
         
-        // 내(컴퓨터) 등록 세트에 붙이기 검사
-        for (let mIdx = 0; mIdx < finalCMelds.length; mIdx++) {
-          const pos = canLayoff(card, finalCMelds[mIdx]);
+        // 내(컴퓨터) 등록 세트와 플레이어 등록 세트 모두 검사
+        const targetMelds = [...finalCMelds, ...finalPMelds];
+        let foundIndex = -1;
+        let pos: 'front' | 'back' | 'group' | null = null;
+        
+        for (let i = 0; i < targetMelds.length; i++) {
+          pos = canLayoff(card, targetMelds[i]);
           if (pos) {
-            if (pos === 'front') finalCMelds[mIdx].unshift(card);
-            else finalCMelds[mIdx].push(card);
-
-            const isSeq = finalCMelds[mIdx].every(c => c.suit === finalCMelds[mIdx][0].suit);
-            if (isSeq) finalCMelds[mIdx].sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
-
-            hand.splice(cardIdx, 1);
-            layoffFound = true;
+            foundIndex = i;
             break;
           }
         }
-        if (layoffFound) break;
-
-        // 상대(플레이어) 등록 세트에 붙이기 검사
-        for (let mIdx = 0; mIdx < finalPMelds.length; mIdx++) {
-          const pos = canLayoff(card, finalPMelds[mIdx]);
-          if (pos) {
-            if (pos === 'front') finalPMelds[mIdx].unshift(card);
-            else finalPMelds[mIdx].push(card);
-
-            const isSeq = finalPMelds[mIdx].every(c => c.suit === finalPMelds[mIdx][0].suit);
-            if (isSeq) finalPMelds[mIdx].sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
-
-            hand.splice(cardIdx, 1);
-            layoffFound = true;
-            break;
+        
+        if (foundIndex !== -1 && pos) {
+          // 어떤 세트에 붙었는지 확인하여 실제 배열 업데이트
+          const isComputerMeld = foundIndex < finalCMelds.length;
+          const meldIndex = isComputerMeld ? foundIndex : foundIndex - finalCMelds.length;
+          const targetMeld = isComputerMeld ? finalCMelds[meldIndex] : finalPMelds[meldIndex];
+          
+          if (pos === 'front') {
+            targetMeld.unshift(card);
+          } else {
+            targetMeld.push(card);
           }
+          
+          const isSeq = targetMeld.every(c => c.suit === targetMeld[0].suit);
+          if (isSeq) {
+            targetMeld.sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
+          }
+          
+          hand.splice(cardIdx, 1);
+          layoffFound = true;
+          break;
         }
-        if (layoffFound) break;
       }
     }
 
