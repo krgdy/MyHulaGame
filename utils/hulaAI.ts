@@ -228,11 +228,11 @@ export function isValidMeld(cards: Card[]): boolean {
   }
 
   // 2. 트리플 / 포커 (같은 숫자 3장 이상)
-  if (cards.length === 3) {
-    return isTriple(cards);
+  if (cards.length === 3 && isTriple(cards)) {
+    return true;
   }
-  if (cards.length === 4) {
-    return cards.every(c => c.value === cards[0].value);
+  if (cards.length === 4 && cards.every(c => c.value === cards[0].value)) {
+    return true;
   }
 
   // 3. 스트레이트 플러시 (같은 무늬 연속된 숫자 3장 이상)
