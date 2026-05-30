@@ -121,84 +121,87 @@ export default function HulaGameScreen() {
     const cardCenterX = dropX + 34; // CARD_WIDTH / 2
     const cardCenterY = dropY + 50; // CARD_HEIGHT / 2
 
-    // 1. 내 등록 영역에 드롭한 경우
+    // 1. 내 등록 영역에 드롭한 경우 (세로 오차 범위 40px 버퍼 추가)
     if (
       playerMeldsLayout &&
-      cardCenterY >= playerMeldsLayout.y &&
-      cardCenterY <= playerMeldsLayout.y + playerMeldsLayout.height
+      cardCenterY >= playerMeldsLayout.y - 40 &&
+      cardCenterY <= playerMeldsLayout.y + playerMeldsLayout.height + 40
     ) {
       const scrollDropX = cardCenterX - playerMeldsLayout.x + playerMeldsScrollX.current;
 
-      // 각 등록 그룹의 가로 시작 및 중심 좌표 계산
       let currentX = 12; // paddingHorizontal
-      const centers: number[] = [];
+      let closestIdx = -1;
+      let minDistance = 99999;
+
       for (let i = 0; i < playerMelds.length; i++) {
         const meld = playerMelds[i];
         const isExpanded = i === expandedPlayerMeldIdx;
         const cardSpacing = isExpanded ? 36 : 14; // 펼쳤을 때(32+4) vs 겹쳤을 때(32-18)
         const width = 32 + (meld.length - 1) * cardSpacing + 8;
-        const centerX = currentX + width / 2;
-        centers.push(centerX);
+
+        const leftBound = currentX - 30;
+        const rightBound = currentX + width + 30;
+
+        // 가로 바운더리 내에 존재하고 붙이기가 가능할 때만 거리 비교 수행
+        if (scrollDropX >= leftBound && scrollDropX <= rightBound) {
+          if (canLayoff(card, meld)) {
+            const centerX = currentX + width / 2;
+            const dist = Math.abs(centerX - scrollDropX);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestIdx = i;
+            }
+          }
+        }
         currentX += width + 12; // gap(12)
       }
 
-      let closestIdx = -1;
-      let minDistance = 99999;
-      for (let i = 0; i < centers.length; i++) {
-        const dist = Math.abs(centers[i] - scrollDropX);
-        if (dist < minDistance && dist < 60) {
-          minDistance = dist;
-          closestIdx = i;
-        }
-      }
-
       if (closestIdx !== -1) {
-        const targetMeld = playerMelds[closestIdx];
-        if (canLayoff(card, targetMeld)) {
-          layoffCard(card.id, closestIdx, true, true);
-          setSelectedCardIds(prev => prev.filter(id => id !== cardId));
-          return;
-        }
+        layoffCard(card.id, closestIdx, true, true);
+        setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        return;
       }
     }
 
-    // 2. 상대 등록 영역에 드롭한 경우
+    // 2. 상대 등록 영역에 드롭한 경우 (세로 오차 범위 40px 버퍼 추가)
     if (
       opponentMeldsLayout &&
-      cardCenterY >= opponentMeldsLayout.y &&
-      cardCenterY <= opponentMeldsLayout.y + opponentMeldsLayout.height
+      cardCenterY >= opponentMeldsLayout.y - 40 &&
+      cardCenterY <= opponentMeldsLayout.y + opponentMeldsLayout.height + 40
     ) {
       const scrollDropX = cardCenterX - opponentMeldsLayout.x + opponentMeldsScrollX.current;
 
-      let currentX = 12;
-      const centers: number[] = [];
+      let currentX = 12; // paddingHorizontal
+      let closestIdx = -1;
+      let minDistance = 99999;
+
       for (let i = 0; i < computerMelds.length; i++) {
         const meld = computerMelds[i];
         const isExpanded = i === expandedComputerMeldIdx;
         const cardSpacing = isExpanded ? 36 : 14;
         const width = 32 + (meld.length - 1) * cardSpacing + 8;
-        const centerX = currentX + width / 2;
-        centers.push(centerX);
-        currentX += width + 12;
-      }
 
-      let closestIdx = -1;
-      let minDistance = 99999;
-      for (let i = 0; i < centers.length; i++) {
-        const dist = Math.abs(centers[i] - scrollDropX);
-        if (dist < minDistance && dist < 60) {
-          minDistance = dist;
-          closestIdx = i;
+        const leftBound = currentX - 30;
+        const rightBound = currentX + width + 30;
+
+        // 가로 바운더리 내에 존재하고 붙이기가 가능할 때만 거리 비교 수행
+        if (scrollDropX >= leftBound && scrollDropX <= rightBound) {
+          if (canLayoff(card, meld)) {
+            const centerX = currentX + width / 2;
+            const dist = Math.abs(centerX - scrollDropX);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestIdx = i;
+            }
+          }
         }
+        currentX += width + 12; // gap(12)
       }
 
       if (closestIdx !== -1) {
-        const targetMeld = computerMelds[closestIdx];
-        if (canLayoff(card, targetMeld)) {
-          layoffCard(card.id, closestIdx, false, true);
-          setSelectedCardIds(prev => prev.filter(id => id !== cardId));
-          return;
-        }
+        layoffCard(card.id, closestIdx, false, true);
+        setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        return;
       }
     }
   };
