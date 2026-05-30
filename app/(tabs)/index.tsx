@@ -40,6 +40,12 @@ export default function HulaGameScreen() {
   // 선택된 카드들 및 버리기 애니메이션 대기 상태
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [discardingCardId, setDiscardingCardId] = useState<number>(0);
+  const isActionProcessing = useRef(false);
+
+  // 동기 카드 선택 해제 함수
+  const deselectAllCards = () => {
+    setSelectedCardIds([]);
+  };
 
   const topDiscardCard = discardPile[discardPile.length - 1];
 
@@ -56,22 +62,28 @@ export default function HulaGameScreen() {
 
   // 선택 해제
   const handleCancelSelection = () => {
-    setSelectedCardIds([]);
+    if (isActionProcessing.current) return;
+    deselectAllCards();
   };
 
   // 다중 카드 등록
   const handleRegisterSelected = () => {
+    if (isActionProcessing.current) return;
     if (isValidMeldSelected) {
+      isActionProcessing.current = true;
       registerMeld(selectedCards, true);
-      setSelectedCardIds([]);
+      deselectAllCards();
+      isActionProcessing.current = false;
     }
   };
 
   // 선택한 단일 카드 버리기 트리거
   const handleDiscardSelected = () => {
+    if (isActionProcessing.current) return;
     if (selectedCardIds.length === 1) {
       const cardId = selectedCardIds[0];
-      setSelectedCardIds([]);
+      isActionProcessing.current = true;
+      deselectAllCards(); // 즉시 선택 해제하여 패널 감춤
       setDiscardingCardId(cardId);
     }
   };
@@ -80,10 +92,12 @@ export default function HulaGameScreen() {
   const handleOnDiscard = (cardId: number) => {
     setDiscardingCardId(0);
     discardCard(cardId);
+    isActionProcessing.current = false; // 버리기 완료 후 처리 해제
   };
 
   // 카드 탭 토글
   const handleToggleSelect = (cardId: number) => {
+    if (isActionProcessing.current) return;
     if (selectedCardIds.includes(cardId)) {
       setSelectedCardIds(selectedCardIds.filter(id => id !== cardId));
     } else {
@@ -93,6 +107,7 @@ export default function HulaGameScreen() {
 
   // 내 손패 드래그 종료 시 (붙이기 시도)
   const handleDragEnd = (cardId: number, dropX: number, dropY: number) => {
+    if (isActionProcessing.current) return;
     const card = playerHand.find(c => c.id === cardId);
     if (!card) return;
 
@@ -321,7 +336,7 @@ export default function HulaGameScreen() {
 
         {/* 액션 버튼 패널 및 조작 가이드 */}
         <View style={styles.actionPanel}>
-          {selectedCardIds.length > 0 ? (
+          {selectedCardIds.length > 0 && !isActionProcessing.current ? (
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.cancelButton]}
