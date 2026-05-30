@@ -44,6 +44,10 @@ export default function HulaGameScreen() {
   const [discardingCardId, setDiscardingCardId] = useState<number>(0);
   const isActionProcessing = useRef(false);
 
+  // 등록 패 클릭 시 펼침 상태 관리
+  const [expandedPlayerMeldIdx, setExpandedPlayerMeldIdx] = useState<number | null>(null);
+  const [expandedComputerMeldIdx, setExpandedComputerMeldIdx] = useState<number | null>(null);
+
   // 동기 카드 선택 해제 함수
   const deselectAllCards = () => {
     setSelectedCardIds([]);
@@ -130,7 +134,9 @@ export default function HulaGameScreen() {
       const centers: number[] = [];
       for (let i = 0; i < playerMelds.length; i++) {
         const meld = playerMelds[i];
-        const width = 32 + (meld.length - 1) * 14 + 8; // miniCardWidth(32) + overlaps(14) + padding
+        const isExpanded = i === expandedPlayerMeldIdx;
+        const cardSpacing = isExpanded ? 36 : 14; // 펼쳤을 때(32+4) vs 겹쳤을 때(32-18)
+        const width = 32 + (meld.length - 1) * cardSpacing + 8;
         const centerX = currentX + width / 2;
         centers.push(centerX);
         currentX += width + 12; // gap(12)
@@ -168,7 +174,9 @@ export default function HulaGameScreen() {
       const centers: number[] = [];
       for (let i = 0; i < computerMelds.length; i++) {
         const meld = computerMelds[i];
-        const width = 32 + (meld.length - 1) * 14 + 8;
+        const isExpanded = i === expandedComputerMeldIdx;
+        const cardSpacing = isExpanded ? 36 : 14;
+        const width = 32 + (meld.length - 1) * cardSpacing + 8;
         const centerX = currentX + width / 2;
         centers.push(centerX);
         currentX += width + 12;
@@ -219,26 +227,36 @@ export default function HulaGameScreen() {
             }}
             scrollEventThrottle={16}
           >
-            {computerMelds.length === 0 ? (
-              <Text style={styles.emptyMeldText}>등록된 상대 카드 없음</Text>
-            ) : (
-              computerMelds.map((meld, groupIdx) => (
-                <View key={`comp-meld-${groupIdx}`} style={styles.meldGroup}>
+          {computerMelds.length === 0 ? (
+            <Text style={styles.emptyMeldText}>등록된 상대 카드 없음</Text>
+          ) : (
+            computerMelds.map((meld, groupIdx) => {
+              const isExpanded = groupIdx === expandedComputerMeldIdx;
+              return (
+                <TouchableOpacity
+                  key={`comp-meld-${groupIdx}`}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setExpandedComputerMeldIdx(prev => prev === groupIdx ? null : groupIdx);
+                  }}
+                  style={styles.meldGroup}
+                >
                   {meld.map((card, cardIdx) => (
                     <View
                       key={card.id}
                       style={[
                         styles.miniCard,
-                        { marginLeft: cardIdx === 0 ? 0 : -18 }
+                        { marginLeft: cardIdx === 0 ? 0 : (isExpanded ? 4 : -18) }
                       ]}
                     >
                       <Text style={[styles.miniSuit, { color: card.color }]}>{card.suit}</Text>
                       <Text style={[styles.miniValue, { color: card.color }]}>{card.value}</Text>
                     </View>
                   ))}
-                </View>
-              ))
-            )}
+                </TouchableOpacity>
+              );
+            })
+          )}
           </ScrollView>
         </View>
 
@@ -292,26 +310,36 @@ export default function HulaGameScreen() {
             }}
             scrollEventThrottle={16}
           >
-            {playerMelds.length === 0 ? (
-              <Text style={styles.emptyMeldText}>등록된 내 카드 없음</Text>
-            ) : (
-              playerMelds.map((meld, groupIdx) => (
-                <View key={`player-meld-${groupIdx}`} style={styles.meldGroup}>
+          {playerMelds.length === 0 ? (
+            <Text style={styles.emptyMeldText}>등록된 내 카드 없음</Text>
+          ) : (
+            playerMelds.map((meld, groupIdx) => {
+              const isExpanded = groupIdx === expandedPlayerMeldIdx;
+              return (
+                <TouchableOpacity
+                  key={`player-meld-${groupIdx}`}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setExpandedPlayerMeldIdx(prev => prev === groupIdx ? null : groupIdx);
+                  }}
+                  style={styles.meldGroup}
+                >
                   {meld.map((card, cardIdx) => (
                     <View
                       key={card.id}
                       style={[
                         styles.miniCard,
-                        { marginLeft: cardIdx === 0 ? 0 : -18 }
+                        { marginLeft: cardIdx === 0 ? 0 : (isExpanded ? 4 : -18) }
                       ]}
                     >
                       <Text style={[styles.miniSuit, { color: card.color }]}>{card.suit}</Text>
                       <Text style={[styles.miniValue, { color: card.color }]}>{card.value}</Text>
                     </View>
                   ))}
-                </View>
-              ))
-            )}
+                </TouchableOpacity>
+              );
+            })
+          )}
           </ScrollView>
         </View>
 
