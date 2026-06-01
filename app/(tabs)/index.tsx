@@ -338,16 +338,16 @@ export default function HulaGameScreen() {
           style={styles.boardArea}
         >
           {/* 남은 덱 더미 (누르면 드로우) */}
-          <TouchableOpacity
-            ref={deckRef}
-            style={styles.deck}
-            onPress={drawCard}
-            disabled={gamePhase !== 'PLAYER_DRAW'}
-          >
-            <Text style={styles.deckText}>DECK</Text>
-            <Text style={styles.deckCount}>{deck.length}</Text>
-          </TouchableOpacity>
-
+          <View ref={deckRef}>
+            <TouchableOpacity
+              style={styles.deck}
+              onPress={drawCard}
+              disabled={gamePhase !== 'PLAYER_DRAW'}
+            >
+              <Text style={styles.deckText}>DECK</Text>
+              <Text style={styles.deckCount}>{deck.length}</Text>
+            </TouchableOpacity>
+          </View>
           {/* 버림 카드 더미 */}
           <View
             ref={discardRef}
