@@ -60,6 +60,7 @@ export function useHulaGame() {
     const suitArray: ('♠' | '♥' | '♦' | '♣')[] = ['♠' , '♥' , '♦' , '♣'];
     const valueArray: string[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     const newDeck: Card[] = [];
+    const newDiscardPile: Card[] = [];
 
     // 덱에 카드 52장 넣기
     for (let i = 1; i <= 52; i++) {
@@ -81,10 +82,13 @@ export function useHulaGame() {
     const initialComputerHand = newDeck.splice(0, 7);
 
     setDeck(newDeck);
+    setDiscardPile(newDiscardPile);
     setPlayerHand(initialPlayerHand);
     setComputerHand(initialComputerHand);
     setPlayerMelds([]);
     setComputerMelds([]);
+    setComputerDiscarding(0);
+    setComputerPhase('IDLE');
     setGamePhase('PLAYER_DRAW');
   };
 
