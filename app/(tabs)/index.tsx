@@ -54,6 +54,21 @@ export default function HulaGameScreen() {
   const [expandedPlayerMeldIdx, setExpandedPlayerMeldIdx] = useState<number | null>(null);
   const [expandedComputerMeldIdx, setExpandedComputerMeldIdx] = useState<number | null>(null);
 
+  // 경고 메시지 상태 및 타이머 관리
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const warningTimer = useRef<number | null>(null);
+
+  const showWarning = (message: string) => {
+    if (warningTimer.current) {
+      clearTimeout(warningTimer.current);
+    }
+    setWarningMessage(message);
+    warningTimer.current = setTimeout(() => {
+      setWarningMessage(null);
+      warningTimer.current = null;
+    }, 2000);
+  };
+
   // 동기 카드 선택 해제 함수
   const deselectAllCards = () => {
     setSelectedCardIds([]);
@@ -198,8 +213,12 @@ export default function HulaGameScreen() {
       const scrollDropX = cardCenterX - playerMeldsLayout.x + playerMeldsScrollX.current;
       const closestIdx = findClosestValidMeld(card, scrollDropX, playerMelds, expandedPlayerMeldIdx);
       if (closestIdx !== -1) {
-        layoffCard(card.id, closestIdx, true, true);
-        setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        if (playerMelds.length === 0) {
+          showWarning("내 등록 세트가 최소 1개 이상 있어야 붙일 수 있습니다.");
+        } else {
+          layoffCard(card.id, closestIdx, true, true);
+          setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        }
       }
       return;
     }
@@ -213,8 +232,12 @@ export default function HulaGameScreen() {
       const scrollDropX = cardCenterX - opponentMeldsLayout.x + opponentMeldsScrollX.current;
       const closestIdx = findClosestValidMeld(card, scrollDropX, computerMelds, expandedComputerMeldIdx);
       if (closestIdx !== -1) {
-        layoffCard(card.id, closestIdx, false, true);
-        setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        if (playerMelds.length === 0) {
+          showWarning("내 등록 세트가 최소 1개 이상 있어야 붙일 수 있습니다.");
+        } else {
+          layoffCard(card.id, closestIdx, false, true);
+          setSelectedCardIds(prev => prev.filter(id => id !== cardId));
+        }
       }
       return;
     }
@@ -394,7 +417,13 @@ export default function HulaGameScreen() {
 
         {/* 액션 버튼 패널 및 조작 가이드 */}
         <View style={styles.actionPanel}>
-          {selectedCardIds.length > 0 && !isActionProcessing.current ? (
+          {warningMessage ? (
+            <View style={styles.warningRow}>
+              <Text style={[styles.guideText, styles.warningText]}>
+                ⚠️ {warningMessage}
+              </Text>
+            </View>
+          ) : selectedCardIds.length > 0 && !isActionProcessing.current ? (
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.cancelButton]}
@@ -605,6 +634,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  warningRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  warningText: {
+    color: '#ff3b30',
+    fontWeight: 'bold',
   },
   nonSelectedRow: {
     flexDirection: 'row',
