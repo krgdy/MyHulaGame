@@ -143,7 +143,13 @@ export function useHulaGame() {
     }
   };
 
+  const hasRegisteredMeld = (isPlayer: boolean) => {
+    return isPlayer ? playerMelds.length > 0 : computerMelds.length > 0;
+  };
+
   const layoffCard = (cardId: number, meldIndex: number, isPlayerMeld: boolean, isPlayer: boolean) => {
+    if (!hasRegisteredMeld(isPlayer)) return;
+
     const hand = isPlayer ? playerHand : computerHand;
     const card = hand.find(c => c.id === cardId);
     if (!card) return;
@@ -280,45 +286,48 @@ export function useHulaGame() {
     let finalPMelds = pMelds.map(m => [...m]);
     let finalCMelds = [...cMelds, ...registeredMelds].map(m => [...m]);
     
-    let layoffFound = true;
-    while (layoffFound) {
-      layoffFound = false;
-      for (let cardIdx = 0; cardIdx < hand.length; cardIdx++) {
-        const card = hand[cardIdx];
-        
-        // 내(컴퓨터) 등록 세트와 플레이어 등록 세트 모두 검사
-        const targetMelds = [...finalCMelds, ...finalPMelds];
-        let foundIndex = -1;
-        let pos: 'front' | 'back' | 'group' | null = null;
-        
-        for (let i = 0; i < targetMelds.length; i++) {
-          pos = canLayoff(card, targetMelds[i]);
-          if (pos) {
-            foundIndex = i;
+    // 컴퓨터가 등록한 세트가 하나 이상 존재할 때만 붙이기 가능
+    if (finalCMelds.length > 0) {
+      let layoffFound = true;
+      while (layoffFound) {
+        layoffFound = false;
+        for (let cardIdx = 0; cardIdx < hand.length; cardIdx++) {
+          const card = hand[cardIdx];
+          
+          // 내(컴퓨터) 등록 세트와 플레이어 등록 세트 모두 검사
+          const targetMelds = [...finalCMelds, ...finalPMelds];
+          let foundIndex = -1;
+          let pos: 'front' | 'back' | 'group' | null = null;
+          
+          for (let i = 0; i < targetMelds.length; i++) {
+            pos = canLayoff(card, targetMelds[i]);
+            if (pos) {
+              foundIndex = i;
+              break;
+            }
+          }
+          
+          if (foundIndex !== -1 && pos) {
+            // 어떤 세트에 붙었는지 확인하여 실제 배열 업데이트
+            const isComputerMeld = foundIndex < finalCMelds.length;
+            const meldIndex = isComputerMeld ? foundIndex : foundIndex - finalCMelds.length;
+            const targetMeld = isComputerMeld ? finalCMelds[meldIndex] : finalPMelds[meldIndex];
+            
+            if (pos === 'front') {
+              targetMeld.unshift(card);
+            } else {
+              targetMeld.push(card);
+            }
+            
+            const isSeq = targetMeld.every(c => c.suit === targetMeld[0].suit);
+            if (isSeq) {
+              targetMeld.sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
+            }
+            
+            hand.splice(cardIdx, 1);
+            layoffFound = true;
             break;
           }
-        }
-        
-        if (foundIndex !== -1 && pos) {
-          // 어떤 세트에 붙었는지 확인하여 실제 배열 업데이트
-          const isComputerMeld = foundIndex < finalCMelds.length;
-          const meldIndex = isComputerMeld ? foundIndex : foundIndex - finalCMelds.length;
-          const targetMeld = isComputerMeld ? finalCMelds[meldIndex] : finalPMelds[meldIndex];
-          
-          if (pos === 'front') {
-            targetMeld.unshift(card);
-          } else {
-            targetMeld.push(card);
-          }
-          
-          const isSeq = targetMeld.every(c => c.suit === targetMeld[0].suit);
-          if (isSeq) {
-            targetMeld.sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
-          }
-          
-          hand.splice(cardIdx, 1);
-          layoffFound = true;
-          break;
         }
       }
     }
