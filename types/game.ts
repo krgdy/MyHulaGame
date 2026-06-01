@@ -5,4 +5,4 @@ export interface Card {
   color: 'red' | 'black';
 }
 
-export type GamePhase = 'SETUP' | 'PLAYER_DRAW' | 'PLAYER_DISCARD' | 'COMPUTER_TURN' | 'GAME_OVER';
+export type GamePhase = 'MENU_SCREEN' | 'SETUP' | 'PLAYER_DRAW' | 'PLAYER_DISCARD' | 'COMPUTER_TURN' | 'GAME_OVER';

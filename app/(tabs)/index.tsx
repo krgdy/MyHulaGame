@@ -8,6 +8,7 @@ import { useMeasuredLayout } from '../../hooks/useMeasuredLayout';
 import { isValidMeld, canLayoff } from '../../utils/hulaAI';
 import { Card } from '../../types/game';
 import GameOverScreen from '../../components/GameOverScreen';
+import MainMenuScreen from '../../components/MainMenuScreen';
 
 export default function HulaGameScreen() {
   const {
@@ -231,6 +232,14 @@ export default function HulaGameScreen() {
       return;
     }
   };
+
+  if (gamePhase === 'MENU_SCREEN') {
+    return (
+      <MainMenuScreen
+        onStart={initGame}
+      />
+    );
+  }
 
   if (gamePhase === 'GAME_OVER') {
     return (

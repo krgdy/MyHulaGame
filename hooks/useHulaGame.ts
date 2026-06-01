@@ -3,7 +3,7 @@ import { Card, GamePhase } from '../types/game';
 import { getDiscardCard, canLayoff, isStraightFlush, isTriple } from '../utils/hulaAI';
 
 export function useHulaGame() {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('SETUP');
+  const [gamePhase, setGamePhase] = useState<GamePhase>('MENU_SCREEN');
   const [deck, setDeck] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [computerHand, setComputerHand] = useState<Card[]>([]);
@@ -23,7 +23,7 @@ export function useHulaGame() {
   }, [gamePhase, computerPhase]);
 
   useEffect(() => {
-    if (gamePhase === 'SETUP') return;
+    if (gamePhase === 'SETUP' || gamePhase === 'MENU_SCREEN') return;
     if (playerHand.length === 0 || computerHand.length === 0) {
       setGamePhase('GAME_OVER');
     }
