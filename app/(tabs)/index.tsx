@@ -267,9 +267,8 @@ export default function HulaGameScreen() {
   if (gamePhase === 'GAME_OVER') {
     return (
       <GameOverScreen
-        playerWon={playerHand.length === 0}
-        playerHandCount={playerHand.length}
-        computerHandCount={computerHand.length}
+        playerHand={playerHand}
+        computerHand={computerHand}
         onRestart={initGame}
       />
     );

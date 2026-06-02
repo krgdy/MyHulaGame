@@ -1,37 +1,98 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Card } from '../types/game';
 
 interface GameOverScreenProps {
-  playerWon: boolean;
-  playerHandCount: number;
-  computerHandCount: number;
+  playerHand: Card[];
+  computerHand: Card[];
   onRestart: () => void;
 }
 
 export default function GameOverScreen({
-  playerWon,
-  playerHandCount,
-  computerHandCount,
+  playerHand,
+  computerHand,
   onRestart
 }: GameOverScreenProps) {
+  const VALUE_MAP: Record<string, number> = {
+    'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+    'J': 11, 'Q': 12, 'K': 13
+  };
+
+  const getHandScore = (hand: Card[]) => {
+    return hand.reduce((sum, card) => sum + (VALUE_MAP[card.value] || 0), 0);
+  };
+
+  const playerScore = getHandScore(playerHand);
+  const computerScore = getHandScore(computerHand);
+  const isDeckOut = playerHand.length > 0 && computerHand.length > 0;
+
+  let playerWon = false;
+  let isDraw = false;
+
+  if (playerHand.length === 0) {
+    playerWon = true;
+  } else if (computerHand.length === 0) {
+    playerWon = false;
+  } else {
+    // 덱의 카드가 다 떨어졌을 때, 손패 점수(합)가 낮은 사람이 승리
+    if (playerScore < computerScore) {
+      playerWon = true;
+    } else if (playerScore > computerScore) {
+      playerWon = false;
+    } else {
+      // 점수도 같으면 남은 카드 장수가 적은 사람이 승리
+      if (playerHand.length < computerHand.length) {
+        playerWon = true;
+      } else if (playerHand.length > computerHand.length) {
+        playerWon = false;
+      } else {
+        isDraw = true;
+      }
+    }
+  }
+
+  const getResultText = () => {
+    if (isDraw) return '무승부입니다! 🤝';
+    return playerWon ? '축하합니다! 당신이 이겼습니다! 🎉' : '아쉽네요! 컴퓨터가 이겼습니다. 🤖';
+  };
+
+  const resultStyle = isDraw
+    ? styles.drawText
+    : playerWon
+      ? styles.winText
+      : styles.loseText;
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>GAME OVER</Text>
         
-        <Text style={[styles.resultText, playerWon ? styles.winText : styles.loseText]}>
-          {playerWon ? '축하합니다! 당신이 이겼습니다! 🎉' : '아쉽네요! 컴퓨터가 이겼습니다. 🤖'}
+        <Text style={[styles.resultText, resultStyle]}>
+          {getResultText()}
         </Text>
 
         <View style={styles.scoreContainer}>
           <View style={styles.scoreRow}>
             <Text style={styles.scoreLabel}>내 남은 카드:</Text>
-            <Text style={styles.scoreValue}>{playerHandCount}장</Text>
+            <Text style={styles.scoreValue}>{playerHand.length}장</Text>
           </View>
           <View style={styles.scoreRow}>
             <Text style={styles.scoreLabel}>상대 남은 카드:</Text>
-            <Text style={styles.scoreValue}>{computerHandCount}장</Text>
+            <Text style={styles.scoreValue}>{computerHand.length}장</Text>
           </View>
+
+          {isDeckOut && (
+            <>
+              <View style={[styles.scoreRow, styles.dividerRow]}>
+                <Text style={styles.scoreLabel}>내 카드 점수 합:</Text>
+                <Text style={styles.scoreValue}>{playerScore}점</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                <Text style={styles.scoreLabel}>상대 카드 점수 합:</Text>
+                <Text style={styles.scoreValue}>{computerScore}점</Text>
+              </View>
+            </>
+          )}
         </View>
 
         <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={onRestart}>
@@ -85,6 +146,9 @@ const styles = StyleSheet.create({
   loseText: {
     color: '#ff3b30',
   },
+  drawText: {
+    color: '#ffcc00',
+  },
   scoreContainer: {
     width: '100%',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -99,6 +163,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 6,
+  },
+  dividerRow: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    paddingTop: 8,
+    marginTop: 8,
   },
   scoreLabel: {
     color: 'rgba(255, 255, 255, 0.7)',

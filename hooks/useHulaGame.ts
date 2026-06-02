@@ -121,20 +121,46 @@ export function useHulaGame() {
     const cardToDiscard = playerHand.find(c => c.id === cardId);
     if (!cardToDiscard) return;
 
-    setPlayerHand(playerHand.filter(c => c.id !== cardId));
+    const nextHand = playerHand.filter(c => c.id !== cardId);
+    setPlayerHand(nextHand);
     setDiscardPile([...discardPile, cardToDiscard]);
-    setGamePhase('COMPUTER_TURN');
+
+    // 카드를 버린 후 즉시 손패가 0장이 되면 게임 오버
+    if (nextHand.length === 0) {
+      setGamePhase('GAME_OVER');
+      return;
+    }
+
+    // 다음 차례가 시작되기 전에 덱이 고갈되었는지 확인하여 바로 종료
+    if (deck.length === 0) {
+      setGamePhase('GAME_OVER');
+    } else {
+      setGamePhase('COMPUTER_TURN');
+    }
   };
 
   const discardEnemyCard = (cardId: number) => {
     const cardToDiscard = computerHand.find(c => c.id === cardId);
     if (!cardToDiscard) return;
 
-    setComputerHand(computerHand.filter(c => c.id !== cardId));
+    const nextHand = computerHand.filter(c => c.id !== cardId);
+    setComputerHand(nextHand);
     setDiscardPile([...discardPile, cardToDiscard]);
     setComputerDiscarding(0);
     setComputerPhase('IDLE');
-    setGamePhase('PLAYER_DRAW');
+
+    // 카드를 버린 후 즉시 손패가 0장이 되면 게임 오버
+    if (nextHand.length === 0) {
+      setGamePhase('GAME_OVER');
+      return;
+    }
+
+    // 다음 차례가 시작되기 전에 덱이 고갈되었는지 확인하여 바로 종료
+    if (deck.length === 0) {
+      setGamePhase('GAME_OVER');
+    } else {
+      setGamePhase('PLAYER_DRAW');
+    }
   };
 
   const registerMeld = (cards: Card[], isPlayer: boolean) => {
