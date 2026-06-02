@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, GamePhase } from '../types/game';
-import { getDiscardCard, canLayoff, isStraightFlush, isTriple } from '../utils/hulaAI';
+import { getDiscardCard, canLayoff, isStraightFlush, isTriple, isValidMeld } from '../utils/hulaAI';
 
 export function useHulaGame() {
   const [gamePhase, setGamePhase] = useState<GamePhase>('MENU_SCREEN');
@@ -171,6 +171,32 @@ export function useHulaGame() {
       setComputerHand(prev => prev.filter(hc => !cards.some(c => c.id === hc.id)));
       setComputerMelds(prev => [...prev, cards]);
     }
+  };
+
+  const thankYouRegister = (cardsInHand: Card[]) => {
+    if (gamePhase !== 'PLAYER_DRAW') return;
+    const topCard = discardPile[discardPile.length - 1];
+    if (!topCard) return;
+
+    // 0. 안전 장치 (방어적 프로그래밍): 조합이 유효하지 않으면 상태 전환을 거부
+    if (!isValidMeld([...cardsInHand, topCard])) return;
+
+    // 1. 플레이어 손패에서 선택 카드 제거
+    setPlayerHand(prev => prev.filter(hc => !cardsInHand.some(c => c.id === hc.id)));
+    // 2. 버림패 맨 위 카드 제거
+    setDiscardPile(prev => prev.slice(0, -1));
+
+    // 3. 결합하여 새로운 meld 생성 및 등록 (무늬 수열일 경우 정렬 처리)
+    const newMeld = [...cardsInHand, topCard];
+    const VALUE_MAP: Record<string, number> = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+    const isSeq = newMeld.every(c => c.suit === newMeld[0].suit);
+    if (isSeq) {
+      newMeld.sort((a, b) => (VALUE_MAP[a.value] || 0) - (VALUE_MAP[b.value] || 0));
+    }
+    setPlayerMelds(prev => [...prev, newMeld]);
+
+    // 4. 버림 카드를 가져왔으므로 드로우를 완료한 상태가 되며, 즉시 버리기 페이즈로 이동
+    setGamePhase('PLAYER_DISCARD');
   };
 
   const hasRegisteredMeld = (isPlayer: boolean) => {
@@ -387,5 +413,6 @@ export function useHulaGame() {
     computerDiscarding,
     reorderPlayerHand,
     sortPlayerHand,
+    thankYouRegister,
   };
 }

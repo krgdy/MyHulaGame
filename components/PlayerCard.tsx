@@ -121,9 +121,9 @@ export default function PlayerCard({
       translateY.value = withSpring(homeY.value);
     });
 
-  // [5] 탭 제스처 정의 (카드 선택 토글)
+  // [5] 탭 제스처 정의 (카드 선택 토글 - 땡큐 등록을 위해 PLAYER_DRAW에서도 가능하도록 허용)
   const tapGesture = Gesture.Tap()
-    .enabled(gamePhase === 'PLAYER_DISCARD')
+    .enabled(gamePhase === 'PLAYER_DISCARD' || gamePhase === 'PLAYER_DRAW')
     .onEnd(() => {
       scheduleOnRN(onToggleSelect, card.id);
     });

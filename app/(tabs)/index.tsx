@@ -28,6 +28,7 @@ export default function HulaGameScreen() {
     reorderPlayerHand,
     sortPlayerHand,
     initGame,
+    thankYouRegister,
   } = useHulaGame();
 
   // 화면 크기 변경 시 강제 뷰 마운팅 및 네이티브 레이아웃 측정을 위한 훅
@@ -86,6 +87,23 @@ export default function HulaGameScreen() {
   // 선택된 카드들의 유효성 확인
   const selectedCards = playerHand.filter(c => selectedCardIds.includes(c.id));
   const isValidMeldSelected = isValidMeld(selectedCards);
+
+  // 땡큐 등록 조건: PLAYER_DRAW 페이즈이고, 버림패가 존재하며, 선택한 2장 이상의 카드 + 버림패 맨 위 카드가 유효한 족보일 때
+  const canThankYou =
+    gamePhase === 'PLAYER_DRAW' &&
+    !!topDiscardCard &&
+    selectedCardIds.length >= 2 &&
+    isValidMeld([...selectedCards, topDiscardCard]);
+
+  const handleThankYouRegister = () => {
+    if (isActionProcessing.current) return;
+    if (canThankYou) {
+      isActionProcessing.current = true;
+      thankYouRegister(selectedCards);
+      deselectAllCards();
+      isActionProcessing.current = false;
+    }
+  };
 
   // 선택 해제
   const handleCancelSelection = () => {
@@ -340,7 +358,10 @@ export default function HulaGameScreen() {
           <View ref={deckRef}>
             <TouchableOpacity
               style={styles.deck}
-              onPress={drawCard}
+              onPress={() => {
+                deselectAllCards();
+                drawCard();
+              }}
               disabled={gamePhase !== 'PLAYER_DRAW'}
             >
               <Text style={styles.deckText}>DECK</Text>
@@ -350,7 +371,10 @@ export default function HulaGameScreen() {
           {/* 버림 카드 더미 */}
           <View
             ref={discardRef}
-            style={styles.discardPile}
+            style={[
+              styles.discardPile,
+              canThankYou && styles.discardPileHighlight
+            ]}
           >
             {topDiscardCard ? (
               <View style={styles.discardCardInner}>
@@ -431,24 +455,39 @@ export default function HulaGameScreen() {
                 <Text style={styles.buttonText}>취소</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  isValidMeldSelected ? styles.registerButton : styles.disabledButton
-                ]}
-                onPress={handleRegisterSelected}
-                disabled={!isValidMeldSelected}
-              >
-                <Text style={styles.buttonText}>등록 ({selectedCardIds.length})</Text>
-              </TouchableOpacity>
-
-              {selectedCardIds.length === 1 && (
+              {gamePhase === 'PLAYER_DRAW' ? (
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.discardButton]}
-                  onPress={handleDiscardSelected}
+                  style={[
+                    styles.actionButton,
+                    canThankYou ? styles.thankYouButton : styles.disabledButton
+                  ]}
+                  onPress={handleThankYouRegister}
+                  disabled={!canThankYou}
                 >
-                  <Text style={styles.buttonText}>버리기</Text>
+                  <Text style={styles.buttonText}>땡큐 등록 ({selectedCardIds.length + 1})</Text>
                 </TouchableOpacity>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      isValidMeldSelected ? styles.registerButton : styles.disabledButton
+                    ]}
+                    onPress={handleRegisterSelected}
+                    disabled={!isValidMeldSelected}
+                  >
+                    <Text style={styles.buttonText}>등록 ({selectedCardIds.length})</Text>
+                  </TouchableOpacity>
+
+                  {selectedCardIds.length === 1 && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.discardButton]}
+                      onPress={handleDiscardSelected}
+                    >
+                      <Text style={styles.buttonText}>버리기</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           ) : (
@@ -534,6 +573,15 @@ const styles = StyleSheet.create({
   boardArea: { flex: 1.2, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 30 },
   deck: { width: 68, height: 100, backgroundColor: '#1a5e2f', borderRadius: 8, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff', elevation: 4 },
   discardPile: { width: 68, height: 100, backgroundColor: '#2e2e2e', borderRadius: 8, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#ccc', elevation: 4 },
+  discardPileHighlight: {
+    borderColor: '#d4af37',
+    borderWidth: 2.5,
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 10,
+    elevation: 8,
+  },
   playerArea: { height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   deckText: { color: '#fff', fontSize: 12, opacity: 0.8 },
   deckCount: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginTop: 4 },
@@ -622,6 +670,9 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#555',
     opacity: 0.5,
+  },
+  thankYouButton: {
+    backgroundColor: '#d4af37',
   },
   buttonText: {
     color: '#fff',
