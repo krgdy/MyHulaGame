@@ -1,14 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import PlayerCard from '../../components/PlayerCard';
-import OpponentCard from '../../components/OpponentCard';
-import { useHulaGame } from '../../hooks/useHulaGame';
-import { useMeasuredLayout } from '../../hooks/useMeasuredLayout';
-import { isValidMeld, canLayoff } from '../../utils/hulaAI';
-import { Card } from '../../types/game';
-import GameOverScreen from '../../components/GameOverScreen';
-import MainMenuScreen from '../../components/MainMenuScreen';
+import PlayerCard from '../components/PlayerCard';
+import OpponentCard from '../components/OpponentCard';
+import { useHulaGame } from '../hooks/useHulaGame';
+import { useMeasuredLayout } from '../hooks/useMeasuredLayout';
+import { isValidMeld, canLayoff } from '../utils/hulaAI';
+import { Card } from '../types/game';
+import GameOverScreen from '../components/GameOverScreen';
+import MainMenuScreen from '../components/MainMenuScreen';
 
 export default function HulaGameScreen() {
   const {
@@ -496,7 +496,7 @@ export default function HulaGameScreen() {
                 {gamePhase === 'PLAYER_DRAW'
                   ? '덱을 눌러 카드를 가져오세요.'
                   : gamePhase === 'PLAYER_DISCARD'
-                  ? '카드를 탭하여 선택하거나 드래그하세요.'
+                  ? '카드를 탭하여 선택하세요.'
                   : '상대방의 턴입니다...'}
               </Text>
               {(gamePhase === 'PLAYER_DRAW' || gamePhase === 'PLAYER_DISCARD') && (
