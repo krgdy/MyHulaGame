@@ -7,25 +7,10 @@
  * - 컴퓨터 턴에 등록(Meld)과 붙이기(Layoff)를 자동 최적 탐색하는 행동 알고리즘(runComputerMeldsAndLayoffs)을 수행합니다.
  */
 import { Card } from '../types/game';
-
-const VALUE_MAP: Record<string, number> = {
-  'A': 1,
-  '2': 2,
-  '3': 3,
-  '4': 4,
-  '5': 5,
-  '6': 6,
-  '7': 7,
-  '8': 8,
-  '9': 9,
-  '10': 10,
-  'J': 11,
-  'Q': 12,
-  'K': 13
-};
+import { CARD_VALUE_MAP } from '../constants/game';
 
 function getCardNumericValue(card: Card): number {
-  return VALUE_MAP[card.value] || 0;
+  return CARD_VALUE_MAP[card.value] || 0;
 }
 
 /**

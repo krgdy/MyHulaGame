@@ -1,0 +1,26 @@
+export const CARD_VALUE_MAP: Record<string, number> = {
+  'A': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  '10': 10,
+  'J': 11,
+  'Q': 12,
+  'K': 13
+};
+
+export const CARD_SUIT_ORDER: Record<string, number> = {
+  '♠': 0,
+  '♥': 1,
+  '♦': 2,
+  '♣': 3
+};
+
+export function getCardColor(suit: '♠' | '♥' | '♦' | '♣'): 'red' | 'black' {
+  return (suit === '♥' || suit === '♦') ? 'red' : 'black';
+}

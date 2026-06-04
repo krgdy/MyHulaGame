@@ -120,12 +120,10 @@ export default function HulaGameScreen() {
 
   const activeWarning = isTutorial ? tutorialWarning : warningMessage;
 
-  // 레이아웃에 영향을 주는 요소를 의존성 배열에 추가하여 레이아웃이 밀릴 때도 실시간 측정이 되도록 보장
+  // 레이아웃에 영향을 주는 핵심 요소를 의존성 배열에 추가하여 불필요한 Native 레이아웃 측정을 차단합니다.
   const layoutDeps = [
     width,
     height,
-    selectedCardIds.length > 0,
-    activeWarning,
     isTutorial,
     insets.top,
     insets.bottom
