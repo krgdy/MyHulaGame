@@ -1,3 +1,10 @@
+/**
+ * @file ActionPanel.tsx
+ * @description 플레이어가 카드를 선택했을 때 노출되는 인게임 액션 버튼 패널 및 알림 가이드 컴포넌트입니다.
+ * - 경고 메시지 발생 시 텍스트 경고 메시지를 노출합니다.
+ * - 카드가 선택되지 않았을 때는 턴 정보 안내(덱 클릭 유도, 카드 선택 유도)와 함께 손패 카드 정렬(무늬순/숫자순) 버튼들을 노출합니다.
+ * - 카드가 선택되었을 때는 턴 진행 상황에 맞춰 '취소', '등록', '버리기', '땡큐 등록' 등의 컨트롤 버튼들을 렌더링합니다.
+ */
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 

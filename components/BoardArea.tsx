@@ -1,3 +1,9 @@
+/**
+ * @file BoardArea.tsx
+ * @description 인게임 화면 중앙의 게임 보드 영역 컴포넌트입니다.
+ * - 드로우가 가능한 남은 덱(Deck) 더미의 카드 개수를 표시하고 클릭 리스너를 제공합니다.
+ * - 바닥에 버려진 카드 더미(Discard Pile)의 맨 위 카드를 노출하고, 땡큐 등록 조건 충족 시 골드 테두리로 시각화(Highlight)합니다.
+ */
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Card } from '../types/game';

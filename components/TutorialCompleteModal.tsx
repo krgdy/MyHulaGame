@@ -1,3 +1,9 @@
+/**
+ * @file TutorialCompleteModal.tsx
+ * @description 튜토리얼의 각 미션 단계 완료 시 띄우는 오버레이 팝업 모달 컴포넌트입니다.
+ * - 성공 축하 메시지와 배운 규칙 요약 텍스트를 노출합니다.
+ * - '다음 단계로' 또는 '튜토리얼 완료' 버튼을 클릭하면 다음 미션 혹은 메인 메뉴로 분기 처리를 실행합니다.
+ */
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 

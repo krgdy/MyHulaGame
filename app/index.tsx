@@ -1,3 +1,11 @@
+/**
+ * @file index.tsx
+ * @description 훌라 카드 게임의 메인 스크린 컴포넌트입니다.
+ * - 게임 진행에 따라 메인 메뉴, 인게임 보드, 게임 오버 화면 등을 라우팅합니다.
+ * - 튜토리얼 유도 및 팝업 제어와 인게임 제스처(탭 선택, 붙이기 드래그앤드롭)의 이벤트 조율을 담당합니다.
+ * - 리팩토링된 하위 레이아웃 컴포넌트들을 평평하게 나열하여 JSX 중첩 깊이를 2단계 이하로 평탄화하였습니다.
+ * - Safe Area Insets를 감지하여 투명 네비게이션 바 하단에 적절한 패딩을 채워 넣음으로써 레이아웃 붕괴를 원천 방지합니다.
+ */
 import React, { useState, useRef } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

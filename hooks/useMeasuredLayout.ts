@@ -1,3 +1,9 @@
+/**
+ * @file useMeasuredLayout.ts
+ * @description 뷰 노드의 절대 좌표 및 뷰포트 크기를 측정하는 커스텀 훅입니다.
+ * - React Native의 `node.measure` 메소드를 활용해 디바이스 화면 기준의 pageX, pageY 좌표를 수집합니다.
+ * - Callback Ref 방식을 사용해 노드가 실제 렌더링에 마운트되는 적절한 시점에 정밀 측정이 이루어지도록 돕습니다.
+ */
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface LayoutMetrics {

@@ -1,3 +1,9 @@
+/**
+ * @file TutorialGuideHeader.tsx
+ * @description 튜토리얼 모드 활성화 시 화면 최상단에 나타나는 설명문 영역 컴포넌트입니다.
+ * - 현재 단계별 교육 가이드 제목(Title)과 핵심 지시문(Desc)을 사용자 친화적으로 노출합니다.
+ * - 상단 '종료' 버튼을 통해 튜토리얼 모드에서 강제 탈출할 수 있습니다.
+ */
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 

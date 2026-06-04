@@ -1,3 +1,11 @@
+/**
+ * @file hulaAI.ts
+ * @description 훌라 카드 게임의 규칙(Rules) 검증 및 컴퓨터 차례 시 구동되는 AI 행동 탐색 순수 알고리즘 모음입니다.
+ * - 트리플(동일 숫자), 스트레이트 플러시(동일 무늬 연속 숫자), 7 카드 등 훌라 독립 족보(Meld) 판정을 처리합니다.
+ * - 바닥 세트에 카드를 덧붙일 수 있는지 여부(canLayoff)를 계산합니다.
+ * - 컴퓨터 손패 중 버리기 적절한 카드를 선택하는 의사 결정 알고리즘(getDiscardCard)을 제공합니다.
+ * - 컴퓨터 턴에 등록(Meld)과 붙이기(Layoff)를 자동 최적 탐색하는 행동 알고리즘(runComputerMeldsAndLayoffs)을 수행합니다.
+ */
 import { Card } from '../types/game';
 
 const VALUE_MAP: Record<string, number> = {

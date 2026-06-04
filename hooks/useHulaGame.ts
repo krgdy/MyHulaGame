@@ -1,3 +1,10 @@
+/**
+ * @file useHulaGame.ts
+ * @description 훌라 게임의 전반적인 인게임 상태(State)와 게임 차례 흐름을 정의하고 제어하는 핵심 비즈니스 로직 훅입니다.
+ * - 카드 덱 생성, 셔플 및 플레이어/컴퓨터 초기 손패 세팅을 관리합니다.
+ * - 드로우, 버리기, 땡큐 등록, 붙이기 등의 핵심 행동 상태 전환 처리를 담당합니다.
+ * - 무거운 게임 룰 판정 및 컴퓨터용 행동 탐색 AI 코드는 hulaAI.ts로 분리하여 가벼운 훅 구조를 유지합니다.
+ */
 import { useState, useEffect } from 'react';
 import { Card, GamePhase } from '../types/game';
 import { getDiscardCard, canLayoff, isValidMeld, runComputerMeldsAndLayoffs } from '../utils/hulaAI';

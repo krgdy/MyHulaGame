@@ -1,3 +1,10 @@
+/**
+ * @file MeldsContainer.tsx
+ * @description 플레이어와 컴퓨터가 바닥에 등록(Meld)한 카드 묶음들을 표시하는 가로 스크롤 영역 컴포넌트입니다.
+ * - 등록된 세트가 없을 경우 기본 안내 텍스트("등록된 카드 없음")를 보여줍니다.
+ * - 각 족보 묶음을 클릭(터치)하면 카드 폭을 넓혀 전체 카드가 보이도록 확장(Expansion) 기능을 지원합니다.
+ * - 붙이기(Layoff) 드래그 드롭 판정을 위해 ScrollX 위치를 실시간 측정 콜백으로 피드백합니다.
+ */
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Card } from '../types/game';
