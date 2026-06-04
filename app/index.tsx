@@ -328,6 +328,7 @@ export default function HulaGameScreen() {
           isStepCompleted={isStepCompleted}
           tutorialStep={tutorialStep}
           onNext={nextTutorialStep}
+          onExit={exitTutorial}
         />
 
         {/* 상대방 영역 (튜토리얼 시 사용하지 않으므로 여백 확보를 위해 숨김) */}

@@ -12,13 +12,15 @@ interface TutorialCompleteModalProps {
   isStepCompleted: boolean;
   tutorialStep: number;
   onNext: () => void;
+  onExit: () => void;
 }
 
 export default function TutorialCompleteModal({
   isTutorial,
   isStepCompleted,
   tutorialStep,
-  onNext
+  onNext,
+  onExit
 }: TutorialCompleteModalProps) {
   if (!isTutorial || !isStepCompleted) return null;
 
@@ -37,7 +39,7 @@ export default function TutorialCompleteModal({
         
         <TouchableOpacity 
           style={styles.modalButton} 
-          onPress={onNext}
+          onPress={tutorialStep === 5 ? onExit : onNext}
         >
           <Text style={styles.modalButtonText}>
             {tutorialStep === 5 ? "튜토리얼 완료 (메인으로)" : "다음 단계로"}
