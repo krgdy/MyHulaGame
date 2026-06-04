@@ -3,9 +3,10 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 
 interface MainMenuScreenProps {
   onStart: () => void;
+  onStartTutorial: () => void;
 }
 
-export default function MainMenuScreen({ onStart }: MainMenuScreenProps) {
+export default function MainMenuScreen({ onStart, onStartTutorial }: MainMenuScreenProps) {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -41,6 +42,14 @@ export default function MainMenuScreen({ onStart }: MainMenuScreenProps) {
 
         <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={onStart}>
           <Text style={styles.buttonText}>게임 시작</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.button, styles.tutorialButton]} 
+          activeOpacity={0.8} 
+          onPress={onStartTutorial}
+        >
+          <Text style={styles.buttonText}>튜토리얼 시작</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -131,6 +140,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+  },
+  tutorialButton: {
+    backgroundColor: '#d4af37',
+    marginTop: 12,
+    shadowColor: '#d4af37',
   },
   buttonText: {
     color: '#fff',

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, GamePhase } from '../types/game';
 import { getDiscardCard, canLayoff, isStraightFlush, isTriple, isValidMeld } from '../utils/hulaAI';
 
-export function useHulaGame() {
+export function useHulaGame(options?: { isTutorial?: boolean }) {
+  const isTutorial = options?.isTutorial ?? false;
+
   const [gamePhase, setGamePhase] = useState<GamePhase>('MENU_SCREEN');
   const [deck, setDeck] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
@@ -18,13 +20,14 @@ export function useHulaGame() {
       initGame();
     }
     if (gamePhase === 'COMPUTER_TURN') {
+      if (isTutorial) return; // Skip computer turn if suspended
       handleComputerTurn();
     }
-  }, [gamePhase, computerPhase]);
+  }, [gamePhase, computerPhase, isTutorial]);
 
   useEffect(() => {
     if (gamePhase === 'SETUP' || gamePhase === 'MENU_SCREEN') return;
-    if (playerHand.length === 0 || computerHand.length === 0) {
+    if ((playerHand.length === 0 || computerHand.length === 0) && isTutorial == false) {
       setGamePhase('GAME_OVER');
     }
   }, [playerHand.length, computerHand.length, gamePhase]);
@@ -203,19 +206,19 @@ export function useHulaGame() {
     return isPlayer ? playerMelds.length > 0 : computerMelds.length > 0;
   };
 
-  const layoffCard = (cardId: number, meldIndex: number, isPlayerMeld: boolean, isPlayer: boolean) => {
-    if (!hasRegisteredMeld(isPlayer)) return;
+  const layoffCard = (cardId: number, meldIndex: number, isPlayerMeld: boolean, isPlayer: boolean): boolean => {
+    if (!hasRegisteredMeld(isPlayer)) return false;
 
     const hand = isPlayer ? playerHand : computerHand;
     const card = hand.find(c => c.id === cardId);
-    if (!card) return;
+    if (!card) return false;
 
     const targetMelds = isPlayerMeld ? playerMelds : computerMelds;
-    if (meldIndex < 0 || meldIndex >= targetMelds.length) return;
+    if (meldIndex < 0 || meldIndex >= targetMelds.length) return false;
     const targetMeld = targetMelds[meldIndex];
 
     const position = canLayoff(card, targetMeld);
-    if (!position) return;
+    if (!position) return false;
 
     // 카드 제거
     if (isPlayer) {
@@ -244,6 +247,8 @@ export function useHulaGame() {
     } else {
       setComputerMelds(newMelds);
     }
+
+    return true;
   };
 
   const reorderPlayerHand = (cardId: number, targetIndex: number) => {
@@ -399,11 +404,17 @@ export function useHulaGame() {
     gamePhase,
     setGamePhase,
     deck,
+    setDeck,
     playerHand,
+    setPlayerHand,
     computerHand,
+    setComputerHand,
     discardPile,
+    setDiscardPile,
     playerMelds,
+    setPlayerMelds,
     computerMelds,
+    setComputerMelds,
     drawCard,
     discardCard,
     discardEnemyCard,
