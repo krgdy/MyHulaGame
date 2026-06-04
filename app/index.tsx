@@ -126,20 +126,20 @@ export default function HulaGameScreen() {
   // useMeasuredLayout 훅을 사용하여 각 컴포넌트의 위치와 크기 정보를 동적으로 추적
   const [opponentAreaRef, opponentAreaLayout] = useMeasuredLayout(layoutDeps);
   const [opponentMeldsRef, opponentMeldsLayout] = useMeasuredLayout(layoutDeps);
-  const [boardAreaRef, boardAreaLayout] = useMeasuredLayout(layoutDeps);
-  const [deckRef, deckRelative] = useMeasuredLayout(layoutDeps);
-  const [discardRef, discardRelative] = useMeasuredLayout(layoutDeps);
+  const [boardAreaRef] = useMeasuredLayout(layoutDeps);
+  const [deckRef, deckLayout] = useMeasuredLayout(layoutDeps);
+  const [discardRef, discardLayout] = useMeasuredLayout(layoutDeps);
   const [playerMeldsRef, playerMeldsLayout] = useMeasuredLayout(layoutDeps);
   const [playerAreaRef, playerAreaLayout] = useMeasuredLayout(layoutDeps);
 
   const topDiscardCard = discardPile[discardPile.length - 1];
 
-  // 각 컴포넌트의 
-  const isLayoutReady = !!(boardAreaLayout && deckRelative && discardRelative && playerAreaLayout && opponentAreaLayout);
-  const deckX = boardAreaLayout && deckRelative ? boardAreaLayout.x + deckRelative.x : 0;
-  const deckY = boardAreaLayout && deckRelative ? boardAreaLayout.y + deckRelative.y : 0;
-  const discardX = boardAreaLayout && discardRelative ? boardAreaLayout.x + discardRelative.x : 0;
-  const discardY = boardAreaLayout && discardRelative ? boardAreaLayout.y + discardRelative.y : 0;
+  // 절대 좌표를 활용하여 위치 정보를 즉시 할당 (더 이상 부모 좌표를 더할 필요 없음)
+  const isLayoutReady = !!(deckLayout && discardLayout && playerAreaLayout && opponentAreaLayout);
+  const deckX = deckLayout ? deckLayout.x : 0;
+  const deckY = deckLayout ? deckLayout.y : 0;
+  const discardX = discardLayout ? discardLayout.x : 0;
+  const discardY = discardLayout ? discardLayout.y : 0;
 
   // 선택된 카드들의 유효성 확인
   const selectedCards = playerHand.filter(c => selectedCardIds.includes(c.id));

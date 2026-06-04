@@ -9,7 +9,7 @@ export interface LayoutMetrics {
 
 /**
  * 종속성 배열(dependencies)이 바뀔 때마다
- * 부모 뷰 기준의 상대 좌표 및 크기를 측정해 반환하는 커스텀 훅입니다.
+ * 절대 좌표 및 크기를 측정하고 상태를 업데이트하는 커스텀 훅입니다.
  * Callback Ref 방식을 사용하여 컴포넌트의 마운트 시점을 감지합니다.
  */
 export function useMeasuredLayout(dependencies: any[]) {
@@ -24,8 +24,8 @@ export function useMeasuredLayout(dependencies: any[]) {
     if (node && typeof node.measure === 'function') {
       timerRef.current = setTimeout(() => {
         if (activeNodeRef.current === node && typeof node.measure === 'function') {
-          node.measure((x: number, y: number, width: number, height: number) => {
-            setLayout({ x, y, width, height });
+          node.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            setLayout({ x: pageX, y: pageY, width, height });
           });
         }
         timerRef.current = null;
