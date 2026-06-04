@@ -6,12 +6,14 @@ interface GameOverScreenProps {
   playerHand: Card[];
   computerHand: Card[];
   onRestart: () => void;
+  onGoToMenu: () => void;
 }
 
 export default function GameOverScreen({
   playerHand,
   computerHand,
-  onRestart
+  onRestart,
+  onGoToMenu
 }: GameOverScreenProps) {
   const VALUE_MAP: Record<string, number> = {
     'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
@@ -97,6 +99,10 @@ export default function GameOverScreen({
 
         <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={onRestart}>
           <Text style={styles.buttonText}>새 게임 시작</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuButton} activeOpacity={0.8} onPress={onGoToMenu}>
+          <Text style={styles.menuButtonText}>메인 메뉴로</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -196,6 +202,28 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  menuButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#d4af37',
+    paddingVertical: 12,
+    paddingHorizontal: 36,
+    borderRadius: 24,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  menuButtonText: {
+    color: '#d4af37',
     fontSize: 16,
     fontWeight: 'bold',
   },

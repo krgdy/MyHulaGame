@@ -55,6 +55,7 @@ export default function HulaGameScreen() {
     reorderPlayerHand,
     sortPlayerHand,
     initGame,
+    goToMenu,
     thankYouRegister,
   } = activeGame;
 
@@ -299,6 +300,7 @@ export default function HulaGameScreen() {
         playerHand={playerHand}
         computerHand={computerHand}
         onRestart={initGame}
+        onGoToMenu={goToMenu}
       />
     );
   }

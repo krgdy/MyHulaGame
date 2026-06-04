@@ -300,6 +300,10 @@ export function useHulaGame(options?: { isTutorial?: boolean }) {
     });
   }, []);
 
+  const goToMenu = useCallback(() => {
+    setGamePhase('MENU_SCREEN');
+  }, []);
+
   return {
     gamePhase,
     setGamePhase,
@@ -321,6 +325,7 @@ export function useHulaGame(options?: { isTutorial?: boolean }) {
     registerMeld,
     layoffCard,
     initGame,
+    goToMenu,
     computerDiscarding,
     reorderPlayerHand,
     sortPlayerHand,
