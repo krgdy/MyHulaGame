@@ -157,13 +157,16 @@ export function getDiscardCard(computerHand: Card[]): number {
   return sortCardsDescending(meldableCards)[0].id;
 }
 
-/**
  * 카드들의 값 배열이 순환을 고려하여 연속적인 스트레이트 수열을 이루는지 검사합니다.
+ * 훌라 게임의 순환형 족보(K-A-2, Q-K-A 등) 판정 원리:
+ * - A는 1, K는 13으로 매핑되어 연속적이지 않은 갭이 발생합니다.
+ * - 정렬된 숫자 배열(예: [1, 2, 13] -> K-A-2)에서 연속되지 않는 경계(갭)가 딱 한 개만 존재하고,
+ *   양쪽 끝값의 차이(최댓값 K(13)와 최솟값 A(1)의 순환 거리)가 수치상 순환 조건인 1을 만족할 때 스트레이트로 판단합니다.
  */
 function isCircularConsecutive(values: number[]): boolean {
   if (values.length < 3) return false;
 
-  // 오름차순 정렬
+  // 오름차순 정렬 (예: K-A-2 -> [1, 2, 13])
   const sorted = [...values].sort((a, b) => a - b);
   const n = sorted.length;
 
@@ -172,10 +175,12 @@ function isCircularConsecutive(values: number[]): boolean {
   if (isNormal) return true;
 
   // 2. 순환형 연속 체크 (예: Q-K-A -> [1, 12, 13] 또는 K-A-2 -> [1, 2, 13])
-  // 마지막 값과 첫 값의 순환 차이가 1이어야 함 (K(13) -> A(1)의 차이는 1)
+  // 순환 구조 상 최솟값(A: 1)에 카드 전체 종류 개수(13)를 더한 값과 최댓값(K: 13)의 차이가 1이어야 함.
+  // 즉, 순환의 끝 지점(K)에서 시작 지점(A)으로 올바르게 이어지는지(차이가 1인지) 검사.
   if ((sorted[0] + 13) - sorted[n - 1] !== 1) return false;
 
-  // 불연속적인 경계면(갭이 1이 아닌 지점)이 단 한 곳만 존재해야 함
+  // 정렬된 배열에서 인접 요소 간 차이가 1이 아닌 예외(갭) 지점이 단 한 곳만 존재해야 순환형 스트레이트가 성립됩니다.
+  // 예: [1, 2, 13]의 경우 (1->2는 연속이고, 2->13은 갭이 1이 아니므로 count = 1이 되어 참)
   let discontinuityCount = 0;
   for (let i = 1; i < n; i++) {
     if (sorted[i] !== sorted[i - 1] + 1) {
