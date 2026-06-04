@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PlayerCard from '../components/PlayerCard';
 import OpponentCard from '../components/OpponentCard';
 import { useHulaGame } from '../hooks/useHulaGame';
@@ -69,15 +70,7 @@ export default function HulaGameScreen() {
 
   // 화면 크기 변경 시 강제 뷰 마운팅 및 네이티브 레이아웃 측정을 위한 훅
   const { width, height } = useWindowDimensions();
-
-  // useMeasuredLayout 훅을 사용하여 각 컴포넌트의 위치와 크기 정보를 동적으로 추적
-  const [opponentAreaRef, opponentAreaLayout] = useMeasuredLayout([width, height]);
-  const [opponentMeldsRef, opponentMeldsLayout] = useMeasuredLayout([width, height]);
-  const [boardAreaRef, boardAreaLayout] = useMeasuredLayout([width, height]);
-  const [deckRef, deckRelative] = useMeasuredLayout([width, height]);
-  const [discardRef, discardRelative] = useMeasuredLayout([width, height]);
-  const [playerMeldsRef, playerMeldsLayout] = useMeasuredLayout([width, height]);
-  const [playerAreaRef, playerAreaLayout] = useMeasuredLayout([width, height]);
+  const insets = useSafeAreaInsets();
   
   const playerMeldsScrollX = useRef(0);
   const opponentMeldsScrollX = useRef(0);
@@ -112,6 +105,26 @@ export default function HulaGameScreen() {
   };
 
   const activeWarning = isTutorial ? tutorialWarning : warningMessage;
+
+  // 레이아웃에 영향을 주는 요소를 의존성 배열에 추가하여 레이아웃이 밀릴 때도 실시간 측정이 되도록 보장
+  const layoutDeps = [
+    width,
+    height,
+    selectedCardIds.length > 0,
+    activeWarning,
+    isTutorial,
+    insets.top,
+    insets.bottom
+  ];
+
+  // useMeasuredLayout 훅을 사용하여 각 컴포넌트의 위치와 크기 정보를 동적으로 추적
+  const [opponentAreaRef, opponentAreaLayout] = useMeasuredLayout(layoutDeps);
+  const [opponentMeldsRef, opponentMeldsLayout] = useMeasuredLayout(layoutDeps);
+  const [boardAreaRef, boardAreaLayout] = useMeasuredLayout(layoutDeps);
+  const [deckRef, deckRelative] = useMeasuredLayout(layoutDeps);
+  const [discardRef, discardRelative] = useMeasuredLayout(layoutDeps);
+  const [playerMeldsRef, playerMeldsLayout] = useMeasuredLayout(layoutDeps);
+  const [playerAreaRef, playerAreaLayout] = useMeasuredLayout(layoutDeps);
 
   const topDiscardCard = discardPile[discardPile.length - 1];
 
@@ -342,7 +355,13 @@ export default function HulaGameScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.container}>
+      <View style={[
+        styles.container,
+        {
+          paddingTop: Math.max(insets.top, 16),
+          paddingBottom: Math.max(insets.bottom, 16),
+        }
+      ]}>
 
         {/* 튜토리얼 가이드 헤더 */}
         {isTutorial && (
@@ -383,10 +402,13 @@ export default function HulaGameScreen() {
           </View>
         )}
 
-        {/* 상대방 영역 */}
+        {/* 상대방 영역 (튜토리얼 시 사용하지 않으므로 여백 확보를 위해 숨김) */}
         <View
           ref={opponentAreaRef}
-          style={styles.opponentArea}
+          style={[
+            styles.opponentArea,
+            isTutorial && { height: 0, marginTop: 0 }
+          ]}
         />
 
         {/* 상대방 등록 카드 슬라이드 뷰 */}
@@ -655,7 +677,7 @@ export default function HulaGameScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f3818', justifyContent: 'space-between', paddingVertical: 20 },
+  container: { flex: 1, backgroundColor: '#0f3818', justifyContent: 'space-between' },
   opponentArea: { height: 82, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   boardArea: { flex: 1.2, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 30 },
   deck: { width: 68, height: 100, backgroundColor: '#1a5e2f', borderRadius: 8, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff', elevation: 4 },
@@ -913,7 +935,7 @@ const TUTORIAL_GUIDES: Record<number, { title: string; desc: string }> = {
   },
   2: {
     title: "2단계: 등록 (Meld) 하기",
-    desc: "손패에 조건에 맞는 세트가 있으면 바닥에 내려놓을 수 있습니다.\n- ♠7 카드를 선택해 '등록'하거나,\n- ♥3, ♦3, ♣3 세 장을 동시에 선택해 '등록'해 보세요."
+    desc: "손패에 조건에 맞는 세트가 있으면 바닥에 내려놓을 수 있습니다.\n- 같은 숫자의 카드 3장\n- 같은 문양의 연속된 숫자 3장\n- 숫자 7\n♠7 카드를 선택해 '등록'하거나,\n- ♥3, ♦3, ♣3 세 장을 동시에 선택해 '등록'해 보세요."
   },
   3: {
     title: "3단계: 카드 붙이기 (Lay off)",
