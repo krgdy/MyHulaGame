@@ -157,7 +157,7 @@ export function getDiscardCard(computerHand: Card[]): number {
   return sortCardsDescending(meldableCards)[0].id;
 }
 
- * 카드들의 값 배열이 순환을 고려하여 연속적인 스트레이트 수열을 이루는지 검사합니다.
+/** 카드들의 값 배열이 순환을 고려하여 연속적인 스트레이트 수열을 이루는지 검사합니다.
  * 훌라 게임의 순환형 족보(K-A-2, Q-K-A 등) 판정 원리:
  * - A는 1, K는 13으로 매핑되어 연속적이지 않은 갭이 발생합니다.
  * - 정렬된 숫자 배열(예: [1, 2, 13] -> K-A-2)에서 연속되지 않는 경계(갭)가 딱 한 개만 존재하고,
@@ -464,4 +464,4 @@ export function runComputerMeldsAndLayoffs(
     newPlayerMelds: finalPMelds,
     newComputerMelds: finalCMelds
   };
-}
+}
