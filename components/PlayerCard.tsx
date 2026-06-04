@@ -129,7 +129,10 @@ export default function PlayerCard({
     });
 
   // 드래그와 탭을 조합 (우선순위 부여)
-  const composedGesture = Gesture.Exclusive(dragGesture, tapGesture);
+  // 드로우 페이즈 시에는 제스쳐 오인식 방지를 위해 드래그 비활성화
+  const composedGesture = (gamePhase === 'PLAYER_DRAW') ?
+  tapGesture :
+  Gesture.Exclusive(dragGesture, tapGesture);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
