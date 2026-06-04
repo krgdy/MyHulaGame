@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Card } from '../types/game';
 import { useHulaGame } from './useHulaGame';
 import { canLayoff } from '../utils/hulaAI';
-import { getCardColor } from '../constants/game';
+import { TUTORIAL_PRESETS } from '../constants/tutorialPresets';
 
 type HulaGameInstance = ReturnType<typeof useHulaGame>;
 
@@ -79,147 +79,51 @@ export function useHulaTutorial(game: HulaGameInstance) {
     }, 2000) as any;
   }, []);
 
-  const makeCard = useCallback((id: number, suit: '♠' | '♥' | '♦' | '♣', value: string): Card => ({
-    id,
-    suit,
-    value,
-    color: getCardColor(suit)
-  }), []);
+  // 공통 단계 완료(Step Completion) 확인 헬퍼
+  const checkStepCompletion = useCallback((action: 'DISCARD' | 'REGISTER' | 'LAYOFF' | 'THANK_YOU'): boolean => {
+    const preset = TUTORIAL_PRESETS.find(p => p.step === tutorialStep);
+    if (!preset) return false;
+
+    const { triggerAction, validate } = preset.completion;
+    if (triggerAction === action) {
+      if (!validate || validate(playerHand)) {
+        setIsStepCompleted(true);
+        return true;
+      }
+    }
+    return false;
+  }, [tutorialStep, playerHand]);
 
   const loadTutorialPreset = useCallback((step: number) => {
     setIsStepCompleted(false);
 
-    // 스텝별 기능 제한 및 경고 메세지 바인딩
-    if (step === 1) {
-      enableFeature('draw');
-      enableFeature('discard');
-      disableFeature('drag', "이 단계에서는 카드를 드래그하여 붙일 수 없습니다.");
-      disableFeature('register', "이 단계에서는 등록을 할 수 없습니다.");
-      disableFeature('thankYou', "이 단계에서는 땡큐 등록을 할 수 없습니다.");
-      setAllowedSelection(null);
-      setAllowedDragging(null);
+    const preset = TUTORIAL_PRESETS.find(p => p.step === step);
+    if (!preset) return;
 
-      setPlayerHand([
-        makeCard(1, '♣', '3'),
-        makeCard(2, '♦', '5'),
-        makeCard(3, '♥', '8'),
-        makeCard(4, '♠', '9'),
-        makeCard(5, '♣', 'Q'),
-        makeCard(6, '♥', 'K'),
-        makeCard(7, '♦', 'A'),
-      ]);
-      setDeck([makeCard(8, '♠', '2')]);
-      setDiscardPile([]);
-      setPlayerMelds([]);
-      setComputerMelds([]);
-      setComputerHand([]);
-      setGamePhase('PLAYER_DRAW');
-    } else if (step === 2) {
-      disableFeature('draw', "이 단계에서는 드로우를 할 필요가 없습니다.");
-      disableFeature('drag', "이 단계에서는 카드를 드래그하여 붙일 수 없습니다.");
-      disableFeature('discard', "이 단계에서는 카드를 버릴 수 없습니다.");
-      disableFeature('thankYou', "이 단계에서는 땡큐 등록을 할 수 없습니다.");
-      enableFeature('register');
-      
-      setAllowedSelection([1, 2, 3, 4]); // ♠7, ♥3, ♦3, ♣3
-      disableFeature('selectCard', "등록 가능한 ♠7 카드 또는 숫자 3 세 개를 선택하세요.");
-      setAllowedDragging(null);
+    // 1. 공통 카드 상태 및 페이즈 초기 세팅 바인딩
+    setPlayerHand(preset.setup.playerHand);
+    setDeck(preset.setup.deck);
+    setDiscardPile(preset.setup.discardPile);
+    setPlayerMelds(preset.setup.playerMelds);
+    setComputerMelds(preset.setup.computerMelds);
+    setComputerHand(preset.setup.computerHand);
+    setGamePhase(preset.setup.gamePhase);
 
-      setPlayerHand([
-        makeCard(1, '♠', '7'),
-        makeCard(2, '♥', '3'),
-        makeCard(3, '♦', '3'),
-        makeCard(4, '♣', '3'),
-        makeCard(5, '♠', 'J'),
-        makeCard(6, '♣', 'Q'),
-        makeCard(7, '♥', 'A'),
-      ]);
-      setDeck([makeCard(8, '♠', 'K')]);
-      setDiscardPile([]);
-      setPlayerMelds([]);
-      setComputerMelds([]);
-      setComputerHand([]);
-      setGamePhase('PLAYER_DISCARD');
-    } else if (step === 3) {
-      disableFeature('draw', "이 단계에서는 드로우를 할 필요가 없습니다.");
-      enableFeature('drag');
-      disableFeature('discard', "이 단계에서는 카드를 버릴 수 없습니다.");
-      disableFeature('register', "이 단계에서는 등록을 할 수 없습니다.");
-      disableFeature('thankYou', "이 단계에서는 땡큐 등록을 할 수 없습니다.");
-      
-      setAllowedSelection([]); // 탭 선택 전체 차단
-      disableFeature('selectCard', "이 단계에서는 카드를 드래그 앤 드롭하여 붙여야 합니다.");
-      
-      setAllowedDragging([1, 2]); // ♠6, ♥J 드래그만 허용
-      disableFeature('dragCard', "붙일 수 있는 카드(♠6 또는 ♥J)를 드래그하세요.");
+    // 2. 프리셋에 기재된 기능 제한사항 일괄 적용
+    preset.restrictions.forEach(res => {
+      if (res.allowed) {
+        enableFeature(res.feature);
+      } else {
+        disableFeature(res.feature, res.message);
+      }
+    });
 
-      setPlayerHand([
-        makeCard(1, '♠', '6'),
-        makeCard(2, '♥', 'J'),
-        makeCard(3, '♦', '9'),
-      ]);
-      setPlayerMelds([
-        [makeCard(4, '♠', '3'), makeCard(5, '♠', '4'), makeCard(6, '♠', '5')]
-      ]);
-      setComputerMelds([
-        [makeCard(7, '♥', 'Q'), makeCard(8, '♥', 'K')]
-      ]);
-      setDeck([makeCard(9, '♦', 'K')]);
-      setDiscardPile([]);
-      setComputerHand([]);
-      setGamePhase('PLAYER_DISCARD');
-    } else if (step === 4) {
-      disableFeature('draw', "이 단계에서는 드로우를 할 필요가 없습니다.");
-      disableFeature('drag', "이 단계에서는 카드를 드래그하여 붙일 수 없습니다.");
-      disableFeature('discard', "이 단계에서는 카드를 버릴 수 없습니다.");
-      disableFeature('register', "이 단계에서는 등록을 할 수 없습니다.");
-      enableFeature('thankYou');
-      
-      setAllowedSelection([1, 2]); // ♣8, ♣9 탭 허용
-      disableFeature('selectCard', "땡큐 등록을 위해 ♣8과 ♣9 카드만 선택해 주세요.");
-      setAllowedDragging(null);
-
-      setPlayerHand([
-        makeCard(1, '♣', '8'),
-        makeCard(2, '♣', '9'),
-        makeCard(3, '♥', '5'),
-        makeCard(4, '♦', 'J'),
-      ]);
-      setDiscardPile([makeCard(5, '♣', '10')]);
-      setPlayerMelds([]);
-      setComputerMelds([]);
-      setDeck([makeCard(6, '♦', 'A')]);
-      setComputerHand([]);
-      setGamePhase('PLAYER_DRAW');
-    } else if (step === 5) {
-      disableFeature('draw', "이 단계에서는 드로우를 할 필요가 없습니다.");
-      enableFeature('drag');
-      disableFeature('discard', "먼저 ♠7 카드를 붙여야 합니다.");
-      disableFeature('register', "이 단계에서는 등록을 할 수 없습니다.");
-      disableFeature('thankYou', "이 단계에서는 땡큐 등록을 할 수 없습니다.");
-      
-      setAllowedSelection([]); // 첫 카드 선택 비활성
-      disableFeature('selectCard', "♠7 카드는 드래그하여 등록 세트에 붙이세요.");
-      
-      setAllowedDragging([1]); // ♠7 드래그 허용
-      disableFeature('dragCard', "♠7 카드를 드래그하여 등록 세트에 붙이세요.");
-
-      setPlayerHand([
-        makeCard(1, '♠', '7'),
-        makeCard(2, '♥', 'K'),
-      ]);
-      setPlayerMelds([
-        [makeCard(3, '♠', '4'), makeCard(4, '♠', '5'), makeCard(5, '♠', '6')]
-      ]);
-      setComputerMelds([]);
-      setDeck([makeCard(6, '♣', 'A')]);
-      setDiscardPile([]);
-      setComputerHand([]);
-      setGamePhase('PLAYER_DISCARD');
-    }
+    setAllowedSelection(preset.allowedSelection);
+    setAllowedDragging(preset.allowedDragging);
   }, [
-    disableFeature, enableFeature, makeCard,
-    setPlayerHand, setDeck, setDiscardPile, setPlayerMelds, setComputerMelds, setComputerHand, setGamePhase
+    disableFeature, enableFeature,
+    setPlayerHand, setDeck, setDiscardPile, setPlayerMelds, setComputerMelds, setComputerHand, setGamePhase,
+    setAllowedSelection, setAllowedDragging
   ]);
 
   const startTutorial = useCallback(() => {
@@ -326,36 +230,36 @@ export function useHulaTutorial(game: HulaGameInstance) {
   const discardCard = useCallback((cardId: number) => {
     if (!checkDiscardAllowed(cardId)) return;
     
-    const originalHandLength = playerHand.length;
+    // 버리기 전 completion 판정 확인
+    const isCompleted = checkStepCompletion('DISCARD');
 
-    // 1. 원본 버리기 수행
-    gameDiscardCard(cardId);
+    // 1. 원본 gameDiscardCard를 호출하지 않고, 튜토리얼용 무해한 상태 변경 수행
+    setPlayerHand(prevHand => {
+      const cardToDiscard = prevHand.find(c => c.id === cardId);
+      if (!cardToDiscard) return prevHand;
 
-    // 2. 페이즈 전환 사이드 이펙트 복구 및 완료 여부 판정
-    if (tutorialStep === 1) {
-      setIsStepCompleted(true);
-      setGamePhase('PLAYER_DISCARD'); // 컴퓨터에게 차례가 넘어가지 않도록 유지
-    } else if (tutorialStep === 5) {
-      if (originalHandLength === 1) {
-        setIsStepCompleted(true);
-        setGamePhase('PLAYER_DISCARD'); // 게임오버 화면 대신 완료 팝업 유지
-      }
-    }
-  }, [checkDiscardAllowed, playerHand.length, gameDiscardCard, tutorialStep, setGamePhase]);
+      const nextHand = prevHand.filter(c => c.id !== cardId);
+      setDiscardPile(prevPile => [...prevPile, cardToDiscard]);
+      return nextHand;
+    });
+
+    // 2. 버리기 완료로 스텝이 완료되었다면 컴퓨터 턴으로 넘어가지 않게 페이즈 고정
+    setGamePhase('PLAYER_DISCARD');
+  }, [checkDiscardAllowed, checkStepCompletion, setPlayerHand, setDiscardPile, setGamePhase]);
 
   const registerMeld = useCallback((cards: Card[], isPlayer: boolean) => {
     if (!checkRegisterAllowed()) return;
     gameRegisterMeld(cards, isPlayer);
     if (isPlayer) {
-      setIsStepCompleted(true);
+      checkStepCompletion('REGISTER');
     }
-  }, [checkRegisterAllowed, gameRegisterMeld]);
+  }, [checkRegisterAllowed, gameRegisterMeld, checkStepCompletion]);
 
   const thankYouRegister = useCallback((cardsInHand: Card[]) => {
     if (!checkThankYouAllowed()) return;
     gameThankYouRegister(cardsInHand);
-    setIsStepCompleted(true);
-  }, [checkThankYouAllowed, gameThankYouRegister]);
+    checkStepCompletion('THANK_YOU');
+  }, [checkThankYouAllowed, gameThankYouRegister, checkStepCompletion]);
 
   const layoffCard = useCallback((cardId: number, meldIndex: number, isPlayerMeld: boolean, isPlayer: boolean): boolean => {
     // 1. 붙이기 시도 전, 원본 layoffCard 수행
@@ -364,9 +268,9 @@ export function useHulaTutorial(game: HulaGameInstance) {
     // 2. 카드 이동이 성공했는지 체크
     if (!isLayoffSuccess) return false;
 
-    if (tutorialStep === 3) {
-      setIsStepCompleted(true);
-    } else if (tutorialStep === 5) {
+    checkStepCompletion('LAYOFF');
+
+    if (tutorialStep === 5) {
       // 5단계에서 ♠7 붙이기를 성공하면, 드래그 비활성화 및 버리기 활성화
       disableFeature('drag', "이미 ♠7 카드를 붙였습니다. 이제 남은 카드를 버리세요.");
       enableFeature('discard');
@@ -375,7 +279,7 @@ export function useHulaTutorial(game: HulaGameInstance) {
     }
 
     return true;
-  }, [gameLayoffCard, tutorialStep, disableFeature, enableFeature]);
+  }, [gameLayoffCard, tutorialStep, checkStepCompletion, disableFeature, enableFeature]);
 
   return {
     ...game,
