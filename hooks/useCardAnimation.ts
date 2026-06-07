@@ -47,8 +47,8 @@ export function useCardAnimation({
 
   // [1] 정렬 좌표 계산 및 업데이트
   useEffect(() => {
-    const maxHandWidth = playerAreaLayout.width * 0.85;
-    const defaultSpacing = 42;
+    const maxHandWidth = playerAreaLayout.width * 0.95;
+    const defaultSpacing = 48;
     const spacing = totalCards > 1
       ? Math.min(defaultSpacing, (maxHandWidth - 68) / (totalCards - 1)) // CARD_WIDTH = 68
       : defaultSpacing;

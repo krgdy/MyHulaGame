@@ -5,7 +5,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { Card } from '../types/game';
 import { useCardAnimation } from '../hooks/useCardAnimation';
 
-const CARD_WIDTH = 68;
+const CARD_WIDTH = 62;
 const CARD_HEIGHT = 100;
 
 interface PlayerCardProps {
