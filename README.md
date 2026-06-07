@@ -30,6 +30,10 @@ npx expo start
 * **웹 브라우저**: 터미널 화면에서 `w` 키를 누르거나, 웹 디렉토리 상태로 빌드하여 브라우저에서 테스트할 수 있습니다.
 * **에뮬레이터**: Android Studio가 실행 중이면 `a` 키, Xcode가 실행 중이면 `i` 키를 눌러 에뮬레이터에서 실행할 수 있습니다.
 
+### 번외. apk 파일 다운로드
+이미 빌드된 안드로이드 apk 파일을 이용해 설치해 볼 수도 있습니다.
+https://drive.google.com/drive/folders/1wU0CZAfzry4dsMFepZ0w6VpPoD-jZc3A
+
 ---
 
 ## ✨ 주요 기능 (Key Features)
